@@ -13,3 +13,5 @@
     - How to read the data and where to read?
     - How do the HTTP client (solution) and server (grader) work in the codes?
     - Which part is the main logic we need to look into?
+- **Week 3**
+  - Understand the details of the solution example
