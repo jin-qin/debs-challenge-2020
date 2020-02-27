@@ -7,8 +7,8 @@
 ### [Official solution example](https://github.com/dmpalyvos/debs-2020-challenge-local)
 
 ### Dataset
-#### [Small](https://drive.google.com/file/d/1CjxfsHexbI5T0Ex8onav_CysMpQZPEoJ/view?usp=sharing)
-#### [Large](https://chalmersuniversity.app.box.com/s/rct6zpzpanmgf8ddpr9x4pn39m17thm7)
+- [Small](https://drive.google.com/file/d/1CjxfsHexbI5T0Ex8onav_CysMpQZPEoJ/view?usp=sharing)
+- [Large](https://chalmersuniversity.app.box.com/s/rct6zpzpanmgf8ddpr9x4pn39m17thm7)
 
 ### [Rust-based stream processing system](https://github.com/TimelyDataflow/timely-dataflow) (Repository)
 ### [Naiad: A Timely Dataflow System](http://sigops.org/s/conferences/sosp/2013/papers/p439-murray.pdf) (Paper of Rust-based stream processing system)
