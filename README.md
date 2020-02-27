@@ -4,7 +4,7 @@
 
 ## Useful infomation
 ### [DEBS Challenge 2020 Official Website](https://2020.debs.org/call-for-grand-challenge-solutions/)
-### [Official solution example](https://github.com/dmpalyvos/debs-2020-challenge-local/tree/master/solution_app)
+### [Official solution example](https://github.com/dmpalyvos/debs-2020-challenge-local)
 
 ### [Rust-based stream processing system](https://github.com/TimelyDataflow/timely-dataflow) (Repository)
 ### [Naiad: A Timely Dataflow System](http://sigops.org/s/conferences/sosp/2013/papers/p439-murray.pdf) (Paper of Rust-based stream processing system)
