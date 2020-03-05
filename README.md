@@ -5,7 +5,8 @@
 ## **Useful infomation**
 ### [DEBS Challenge 2020 Official Website](https://2020.debs.org/call-for-grand-challenge-solutions/)
 ### [Official solution example](https://github.com/dmpalyvos/debs-2020-challenge-local)
-### [Sequential clustering-based event detection for Non-Intrusive Load Monitoring](https://github.com/jin-qin/debs-challenge-2020/blob/master/docs/papers/SIPP2016_Final.pdf) `Paper`
+### [Sequential clustering-based event detection for Non-Intrusive Load Monitoring](./docs/papers/SIPP2016_Final.pdf) `Paper`
+### [DBSCAN](./docs/papers/DBSCAN.pdf) `Paper`
 
 ### Dataset
 - [Small](https://drive.google.com/file/d/1CjxfsHexbI5T0Ex8onav_CysMpQZPEoJ/view?usp=sharing)
