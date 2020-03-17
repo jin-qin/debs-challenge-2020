@@ -1,0 +1,12 @@
+/Users/runqitian/Workspace/Spring2020/CS591K1/assignment2/clusterdata-analysis-2/src/main/java/clusterdata/exercise2/BusyMachines.java
+/Users/runqitian/Workspace/Spring2020/CS591K1/assignment2/clusterdata-analysis-2/src/main/java/clusterdata/exercise2/GlobalTaskStatistics.java
+/Users/runqitian/Workspace/Spring2020/CS591K1/assignment2/clusterdata-analysis-2/src/main/java/clusterdata/datatypes/JobEvent.java
+/Users/runqitian/Workspace/Spring2020/CS591K1/assignment2/clusterdata-analysis-2/src/main/java/clusterdata/sources/JobEventSource.java
+/Users/runqitian/Workspace/Spring2020/CS591K1/assignment2/clusterdata-analysis-2/src/main/java/clusterdata/exercise2/PerMachineTaskStatistics.java
+/Users/runqitian/Workspace/Spring2020/CS591K1/assignment2/clusterdata-analysis-2/src/main/java/clusterdata/datatypes/EventType.java
+/Users/runqitian/Workspace/Spring2020/CS591K1/assignment2/clusterdata-analysis-2/src/main/java/clusterdata/datatypes/TaskEvent.java
+/Users/runqitian/Workspace/Spring2020/CS591K1/assignment2/clusterdata-analysis-2/src/main/java/clusterdata/sources/TaskEventSource.java
+/Users/runqitian/Workspace/Spring2020/CS591K1/assignment2/clusterdata-analysis-2/src/main/java/clusterdata/utils/AppBase.java
+/Users/runqitian/Workspace/Spring2020/CS591K1/assignment2/clusterdata-analysis-2/src/main/java/clusterdata/exercise2/LongestSessionPerJob.java
+/Users/runqitian/Workspace/Spring2020/CS591K1/assignment2/clusterdata-analysis-2/src/main/java/clusterdata/utils/JobEventSchema.java
+/Users/runqitian/Workspace/Spring2020/CS591K1/assignment2/clusterdata-analysis-2/src/main/java/clusterdata/utils/TaskEventSchema.java
