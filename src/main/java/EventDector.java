@@ -1,9 +1,14 @@
+import entities.Event;
+import entities.Point;
 import entities.RawData;
-import org.apache.commons.collections.iterators.IteratorEnumeration;
+import entities.Window2;
 import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
-import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.common.state.ValueState;
+import org.apache.flink.api.common.state.ValueStateDescriptor;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.streaming.api.functions.windowing.ProcessAllWindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
@@ -11,7 +16,6 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 import utils.Metrics;
 
-import javax.xml.crypto.Data;
 import java.util.*;
 
 public class EventDector{
@@ -33,7 +37,38 @@ public class EventDector{
         return output;
     }
 
+    public DataStream<Event> predict(DataStream<Point> input){
+        DataStream<Event> output = input.process(new PredictFunc());
+        return output;
+    }
 
+
+}
+
+class PredictFunc extends ProcessFunction<Point, Event>{
+
+    ValueState<Window2> w2;
+
+    private double dbscanEps;
+    private int dbscanMinPoints;
+    private Map<Integer, ClusterStructure> clusteringStructure;
+
+    public PredictFunc(){
+
+    }
+
+    @Override
+    public void open(Configuration parameters) throws Exception {
+        w2 = getRuntimeContext().getState(new ValueStateDescriptor<Window2>("w2", Window2.class));
+    }
+
+    @Override
+    public void processElement(Point point, Context context, Collector<Event> collector) throws Exception {
+        Window2 w = w2.value();
+        w.addElement(point);
+        updateClustering(w.getElements());
+        collector.collect(new Event(1,0,-1));
+    }
 
     public void updateClustering(List<Point> inputs){
 
@@ -67,20 +102,20 @@ public class EventDector{
         this.clusteringStructure = clusteringStructure;
 
     }
+}
 
-    static class ToFeatureProcessingFunc
-            extends ProcessAllWindowFunction<RawData, Point, TimeWindow> {
 
-        @Override
-        public void process(Context context, Iterable<RawData> iterable, Collector<Point> collector) throws Exception {
-            List<RawData> ls = new ArrayList<>();
-            iterable.forEach(ls::add);
-            double p = Metrics.activePower(ls);
-            double s = Metrics.apparentPower(ls);
-            double q = Metrics.reactivePower(s,p);
-            Point point = new Point(p,q);
-            collector.collect(point);
-        }
+class ToFeatureProcessingFunc
+        extends ProcessAllWindowFunction<RawData, Point, TimeWindow> {
+
+    @Override
+    public void process(Context context, Iterable<RawData> iterable, Collector<Point> collector) throws Exception {
+        List<RawData> ls = new ArrayList<>();
+        iterable.forEach(ls::add);
+        double p = Metrics.activePower(ls);
+        double s = Metrics.apparentPower(ls);
+        double q = Metrics.reactivePower(s,p);
+        Point point = new Point(p,q);
+        collector.collect(point);
     }
-
 }
