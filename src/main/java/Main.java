@@ -2,17 +2,20 @@ import clusterdata.datatypes.TaskEvent;
 import clusterdata.sources.TaskEventSource;
 import entities.RawData;
 import org.apache.flink.api.java.tuple.Tuple;
+import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.windowing.ProcessAllWindowFunction;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 import request.DataSource;
 import request.Query1Client;
+import utils.Metrics;
 import utils.Utils;
 
 import javax.xml.crypto.Data;
@@ -29,31 +32,19 @@ public class Main {
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
+        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+
         // start the data generator
-        DataStream<RawData> inputStream = env
+        DataStream<RawData> input = env
                 .addSource(new DataSource())
                 .setParallelism(1);
 //        inputStream.print();
-        DataStream<List<Long>> output = inputStream.windowAll(TumblingProcessingTimeWindows.of(Time.milliseconds(50))).process(new MyProcessWindowFunction());
+        EventDector ed = new EventDector();
+
+        DataStream<Point> output = ed.computeInputSignal(input);
         output.print();
         env.execute("Number of busy machines every 5 minutes over the last 15 minutes");
 
     }
 
-    static class MyProcessWindowFunction
-            extends ProcessAllWindowFunction<RawData, List<Long>, TimeWindow> {
-
-
-        @Override
-        public void process(Context context, Iterable<RawData> iterable, Collector<List<Long>> collector) throws Exception {
-            List<Long> ls = new ArrayList<>();
-            for (RawData each: iterable){
-//                System.out.println(each);
-                ls.add(each.i);
-            }
-
-            Collections.sort(ls);
-            collector.collect(ls);
-        }
-    }
 }

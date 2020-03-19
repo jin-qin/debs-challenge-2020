@@ -13,7 +13,7 @@ public class Point implements Clusterable {
      * @param f1: Active power feature
      * @param f2: Reactive power feature
      */
-    public Point(int index, double f1, double f2){
+    public Point(double f1, double f2){
         this.f1 = f1;
         this.f2 = f2;
     }
@@ -22,5 +22,13 @@ public class Point implements Clusterable {
     public double[] getPoint() {
         double[] point = {f1, f2};
         return point;
+    }
+
+    @Override
+    public String toString() {
+        return "Point{" +
+                "f1=" + f1 +
+                ", f2=" + f2 +
+                '}';
     }
 }
