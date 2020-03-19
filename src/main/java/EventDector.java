@@ -3,6 +3,7 @@ import org.apache.commons.collections.iterators.IteratorEnumeration;
 import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.windowing.ProcessAllWindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
@@ -27,15 +28,41 @@ public class EventDector{
         this.w2Size = 100;
     }
 
-    public DataStream<Point> computeInputSignal(DataStream<RawData> input){
+    public DataStream<Point> computeInputSignal(DataStream<RawData> input) {
         DataStream<Point> output = input.windowAll(TumblingEventTimeWindows.of(Time.milliseconds(1000)))
                 .process(new ToFeatureProcessingFunc());
         return output;
     }
 
+    public DataStream<DetectedEvent> predict(DataStream<Point> input) {
+        return null;
+    }
 
+    /**
+     * 
+     * @return Tuple3<c1, c2, event_interval_t>
+     * with c1 being the identifier of the first cluster, c2 the second cluster
+     * in the c1 - c2 cluster-combination, that have passed the model 
+     * checks. The event_interval_t are the indices of the datapoints in between the two clusters.
+     */
+    private DataStream<Tuple3<Integer, Integer, List<Integer>>> checkEventModelConstraints() {
+        return null;
+    }
 
-    public void updateClustering(List<Point> inputs){
+    /**
+     * @param checkedClusters (stream): of triples (c1, c2, event_interval_t)
+     * @return eventClusterCombination (stream): the winning of triples (c1, c2, event_interval_t)
+     */
+    private DataStream<Tuple3<Integer, Integer, List<Integer>>> 
+    computeAndEvaluateLoss(DataStream<Tuple3<Integer, Integer, List<Integer>>> checkedClusters) {
+        return null;
+    }
+
+    private void rolebackBackwardPass() {
+
+    }
+
+    private void updateClustering(List<Point> inputs){
 
         // save point index in a map
         Map<Point, Integer> toIndex = new HashMap<Point, Integer>();
