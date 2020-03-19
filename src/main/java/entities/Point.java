@@ -1,3 +1,5 @@
+package entities;
+
 import org.apache.commons.math3.ml.clustering.Clusterable;
 import org.apache.flink.api.java.tuple.Tuple2;
 
@@ -26,7 +28,7 @@ public class Point implements Clusterable {
 
     @Override
     public String toString() {
-        return "Point{" +
+        return "entities.Point{" +
                 "f1=" + f1 +
                 ", f2=" + f2 +
                 '}';
