@@ -33,24 +33,25 @@ public class Main {
         DataStream<RawData> inputStream = env
                 .addSource(new DataSource())
                 .setParallelism(1);
-        inputStream.print();
-//        DataStream<List<Integer>> output = inputStream.windowAll(TumblingProcessingTimeWindows.of(Time.seconds(50))).process(new MyProcessWindowFunction());
-//        output.print();
+//        inputStream.print();
+        DataStream<List<Long>> output = inputStream.windowAll(TumblingProcessingTimeWindows.of(Time.milliseconds(50))).process(new MyProcessWindowFunction());
+        output.print();
         env.execute("Number of busy machines every 5 minutes over the last 15 minutes");
 
     }
 
     static class MyProcessWindowFunction
-            extends ProcessAllWindowFunction<RawData, List<Integer>, TimeWindow> {
+            extends ProcessAllWindowFunction<RawData, List<Long>, TimeWindow> {
 
 
         @Override
-        public void process(Context context, Iterable<RawData> iterable, Collector<List<Integer>> collector) throws Exception {
-            List<Integer> ls = new ArrayList<>();
+        public void process(Context context, Iterable<RawData> iterable, Collector<List<Long>> collector) throws Exception {
+            List<Long> ls = new ArrayList<>();
             for (RawData each: iterable){
-                System.out.println(each);
+//                System.out.println(each);
                 ls.add(each.i);
             }
+
             Collections.sort(ls);
             collector.collect(ls);
         }

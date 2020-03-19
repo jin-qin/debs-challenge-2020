@@ -16,7 +16,7 @@ public class Utils {
             JSONArray records = (JSONArray) obj.get("records");
             for (Object each: records){
                 JSONObject jobj = (JSONObject)each;
-                ls.add(new RawData(Integer.parseInt(jobj.get("i").toString()), Double.parseDouble(jobj.get("voltage").toString()), Double.parseDouble(jobj.get("current").toString())));
+                ls.add(new RawData(Long.parseLong(jobj.get("i").toString()), Double.parseDouble(jobj.get("voltage").toString()), Double.parseDouble(jobj.get("current").toString())));
             }
             return ls;
         }catch (Exception e){
