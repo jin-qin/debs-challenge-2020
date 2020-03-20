@@ -1,10 +1,6 @@
 package entities;
 
 import org.apache.commons.math3.ml.clustering.Clusterable;
-import org.apache.flink.api.java.tuple.Tuple2;
-
-import java.util.Collection;
-
 
 public class Point implements Clusterable {
 
