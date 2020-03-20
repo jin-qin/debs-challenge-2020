@@ -20,7 +20,7 @@ WebServer/dataset
 target
 
 # vscode cache
-.setting
+.settings
 .classpath
 .project
 
