@@ -15,6 +15,7 @@ WebServer/dataset
 
 # IDEA cache
 .idea
+*.iml
 
 # build cache
 target
