@@ -96,7 +96,6 @@ public class EventDector{
             clusteringStructure.put(cluster_i, clusterStructure);
         }
         this.clusteringStructure = clusteringStructure;
-
     }
 }
 

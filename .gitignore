@@ -10,6 +10,20 @@
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
+# dataset
+WebServer/dataset
+
+# IDEA cache
+.idea
+
+# build cache
+target
+
+# vscode cache
+.setting
+.classpath
+.project
+
 # Package Files #
 *.jar
 *.war
