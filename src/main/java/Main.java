@@ -1,3 +1,4 @@
+import entities.DetectedEvent;
 import entities.Event;
 import entities.Point;
 import entities.RawData;
@@ -20,13 +21,12 @@ public class Main {
         DataStream<RawData> input = env
                 .addSource(new DataSource())
                 .setParallelism(1);
-//        inputStream.print();
+        
         EventDector ed = new EventDector();
 
-        DataStream<Point> stage1 = ed.computeInputSignal(input);
-//        DataStream<Event> result = ed.predict(stage1);
-
-//        result.print();
+        DataStream<Point> features = ed.computeInputSignal(input);
+        DataStream<DetectedEvent> detectEvents = ed.predict(features);
+        
         env.execute("Number of busy machines every 5 minutes over the last 15 minutes");
 
     }

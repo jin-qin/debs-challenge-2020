@@ -24,9 +24,6 @@ public class Point implements Clusterable {
 
     @Override
     public String toString() {
-        return "entities.Point{" +
-                "f1=" + f1 +
-                ", f2=" + f2 +
-                '}';
+        return String.format("entities.Point{f1=%f, f2=%f}", f1, f2);
     }
 }

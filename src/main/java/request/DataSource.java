@@ -8,6 +8,8 @@ import utils.Utils;
 import java.util.List;
 
 public class DataSource implements SourceFunction<RawData> {
+    private static final long serialVersionUID = -1418183502579251444L;
+
     @Override
     public void run(SourceContext<RawData> sourceContext) throws Exception {
         Query1Client query1 = new Query1Client("localhost","/data/1");

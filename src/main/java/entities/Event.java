@@ -13,10 +13,6 @@ public class Event {
 
     @Override
     public String toString() {
-        return "Event{" +
-                "s=" + s +
-                ", d=" + d +
-                ", event_s=" + event_s +
-                '}';
+        return String.format("Event{s=%d, d=%d, event_s=%d}", s, d, event_s);
     }
 }

@@ -13,10 +13,6 @@ public class RawData {
 
     @Override
     public String toString() {
-        return "RawData{" +
-                "i=" + i +
-                ", voltage=" + voltage +
-                ", current=" + current +
-                '}';
+        return String.format("RawData{i=%d, voltage=%f, current=%f}", i, voltage, current);
     }
 }
