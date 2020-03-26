@@ -26,8 +26,7 @@ public class EventDector {
 
     private double dbscanEps;
     private int dbscanMinPoints;
-    private List<Point> w2; // window 2, to accpet each new pair of features (active and reactive power)
-    private final int W2_SIZE = 100;
+    private static final int W2_SIZE = 100;
     // private Map<Integer, ClusterStructure> clusteringStructure;
 
     public EventDector() {
@@ -44,14 +43,7 @@ public class EventDector {
 
     public DataStream<DetectedEvent>
     predict(DataStream<Point> input) {
-        DataStream<List<Point>> w2Stream = input.map((MapFunction<Point, List<Point>>) e -> {
-            if (this.w2.size() > this.W2_SIZE) {
-                this.w2.remove(0);
-            }
-
-            this.w2.add(e);
-            return this.w2;
-        });
+        DataStream<List<Point>> w2Stream = input.map(new windowStreamMapper());
 
         DataStream<Map<Integer, ClusterStructure>> clusteringStructureStream = this.updateClustering(w2Stream);
 
@@ -62,9 +54,33 @@ public class EventDector {
         return null;
     }
 
+    private class windowStreamMapper implements MapFunction<Point, List<Point>> {
+        private static final long serialVersionUID = -2289721819064535612L;
+        private List<Point> w2; // window 2, to accpet each new pair of features (active and reactive power)
+
+        @Override
+        public List<Point> map(Point value) throws Exception {
+            if (this.w2.size() > EventDector.W2_SIZE) {
+                this.w2.remove(0);
+            }
+
+            this.w2.add(value);
+            return this.w2;
+        }
+    }
+
     private DataStream<Map<Integer, ClusterStructure>>
     updateClustering(DataStream<List<Point>> inputs) {
-        return inputs.map((MapFunction<List<Point>, Map<Integer, ClusterStructure>>) e -> {
+        return inputs.map(new ClusteringStructureStreamMapper());
+    }
+
+    private class ClusteringStructureStreamMapper implements MapFunction<List<Point>, Map<Integer, ClusterStructure>> {
+        private static final long serialVersionUID = -4106659951875808137L;
+        private final double dbscanEps = 0.03;
+        private final int dbscanMinPoints = 2;
+
+        @Override
+        public Map<Integer, ClusterStructure> map(List<Point> e) throws Exception {
             // save point index in a map
             Map<Point, Integer> toIndex = new HashMap<Point, Integer>();
             for (int i=0; i < e.size(); i++){
@@ -93,7 +109,7 @@ public class EventDector {
                 clusteringStructure.put(cluster_i, clusterStructure);
             }
             return clusteringStructure;
-        });
+        }
     }
 
     /**
@@ -145,21 +161,20 @@ public class EventDector {
 
         }
     }
-}
 
-
-class ToFeatureProcessingFunc
+    private class ToFeatureProcessingFunc
         extends ProcessAllWindowFunction<RawData, Point, TimeWindow> {
-    private static final long serialVersionUID = -397143166557786027L;
+        private static final long serialVersionUID = -397143166557786027L;
 
-    @Override
-    public void process(Context context, Iterable<RawData> iterable, Collector<Point> collector) throws Exception {
-        List<RawData> ls = new ArrayList<>();
-        iterable.forEach(ls::add);
-        double p = Metrics.activePower(ls);
-        double s = Metrics.apparentPower(ls);
-        double q = Metrics.reactivePower(s,p);
-        Point point = new Point(p,q);
-        collector.collect(point);
+        @Override
+        public void process(Context context, Iterable<RawData> iterable, Collector<Point> collector) throws Exception {
+            List<RawData> ls = new ArrayList<>();
+            iterable.forEach(ls::add);
+            double p = Metrics.activePower(ls);
+            double s = Metrics.apparentPower(ls);
+            double q = Metrics.reactivePower(s,p);
+            Point point = new Point(p,q);
+            collector.collect(point);
+        }
     }
 }
