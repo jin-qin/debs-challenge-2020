@@ -47,9 +47,9 @@ public class EventDector {
 
         DataStream<Map<Integer, ClusterStructure>> clusteringStructureStream = this.updateClustering(w2Stream);
 
-        DataStream<List<Tuple3<Integer, Integer, List<Integer>>>> checkedClustersStream = this.checkEventModelConstraints(clusteringStructureStream);
+        DataStream<Tuple2<List<Tuple3<Integer, Integer, List<Integer>>>, Map<Integer, ClusterStructure>>> checkedClustersStream = this.checkEventModelConstraints(clusteringStructureStream);
         
-        DataStream<Tuple3<Integer, Integer, List<Integer>>> eventClusterCombinationStream = this.computeAndEvaluateLoss(checkedClustersStream, clusteringStructureStream);
+        DataStream<Tuple3<Integer, Integer, List<Integer>>> eventClusterCombinationStream = this.computeAndEvaluateLoss(checkedClustersStream);
 
         return null;
     }
@@ -119,7 +119,7 @@ public class EventDector {
      * in the c1 - c2 cluster-combination, that have passed the model 
      * checks. The event_interval_t are the indices of the datapoints in between the two clusters.
      */
-    private DataStream<List<Tuple3<Integer, Integer, List<Integer>>>>
+    private DataStream<Tuple2<List<Tuple3<Integer, Integer, List<Integer>>>, Map<Integer, ClusterStructure>>>
     checkEventModelConstraints(DataStream<Map<Integer, ClusterStructure>> clusteringStructureStream) {
         // It's better to use FlatMap here.
         return null;
@@ -130,11 +130,8 @@ public class EventDector {
      * @return eventClusterCombination (stream): the winning of triples (c1, c2, event_interval_t)
      */
     private DataStream<Tuple3<Integer, Integer, List<Integer>>> 
-    computeAndEvaluateLoss(DataStream<List<Tuple3<Integer, Integer, List<Integer>>>> checkedClustersStream,
-                           DataStream<Map<Integer, ClusterStructure>> clusteringStructureStream) {
-        return checkedClustersStream
-                    .connect(clusteringStructureStream)
-                    .flatMap(new computeLossFlatMapper());
+    computeAndEvaluateLoss(DataStream<Tuple2<List<Tuple3<Integer, Integer, List<Integer>>>, Map<Integer, ClusterStructure>>> checkedClustersStream) {
+        return checkedClustersStream.flatMap(new computeLossFlatMapper());
     }
 
     private void rolebackBackwardPass() {
@@ -142,21 +139,13 @@ public class EventDector {
     }
 
     private class computeLossFlatMapper 
-    implements CoFlatMapFunction<List<Tuple3<Integer, Integer, List<Integer>>>, 
-                                 Map<Integer, ClusterStructure>, Tuple3<Integer, 
+    implements FlatMapFunction<Tuple2<List<Tuple3<Integer, Integer, List<Integer>>>, Map<Integer, ClusterStructure>>, Tuple3<Integer, 
                                  Integer, List<Integer>>> {
         private static final long serialVersionUID = 2653570300428136437L;
 
         @Override
         public void 
-        flatMap1(List<Tuple3<Integer, Integer, List<Integer>>> checkedClusters, 
-                Collector<Tuple3<Integer, Integer, List<Integer>>> out) throws Exception {
-
-        }
-
-        @Override
-        public void 
-        flatMap2(Map<Integer, ClusterStructure> clusteringStructure, 
+        flatMap(Tuple2< List<Tuple3<Integer, Integer, List<Integer>>>, Map<Integer, ClusterStructure> > checkedClusters, 
                 Collector<Tuple3<Integer, Integer, List<Integer>>> out) throws Exception {
 
         }
