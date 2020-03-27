@@ -2,16 +2,16 @@ package entities;
 
 import org.apache.commons.math3.ml.clustering.Clusterable;
 
-public class Point implements Clusterable {
+public class Feature implements Clusterable {
 
-    private double f1;
-    private double f2;
+    public double f1;
+    public double f2;
 
     /**
      * @param f1: Active power feature
      * @param f2: Reactive power feature
      */
-    public Point(double f1, double f2){
+    public Feature(double f1, double f2){
         this.f1 = f1;
         this.f2 = f2;
     }
