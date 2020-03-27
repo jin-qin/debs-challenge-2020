@@ -4,6 +4,8 @@ public class KeyedFeature extends Feature {
 
     public long key; // -1 represents no key
 
+    public KeyedFeature() { super(-1, -1); }
+
     public KeyedFeature(long key, double f1, double f2) {
         super(f1, f2);
         this.key = key;

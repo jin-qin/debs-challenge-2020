@@ -1,6 +1,8 @@
 import entities.DetectedEvent;
 import entities.Event;
 import entities.Feature;
+import entities.KeyedFeature;
+import entities.KeyedFeature;
 import entities.RawData;
 import entities.Window2;
 import scala.collection.parallel.ParIterableLike.FlatMap;
@@ -25,8 +27,6 @@ public class EventDector {
 
     private double dbscanEps;
     private int dbscanMinPoints;
-    private static final int W2_SIZE = 100;
-    private List<Feature> w2; // window 2, to accpet each new pair of features (active and reactive power)
 
     private Map<Integer, ClusterStructure> clusteringStructure;
 
@@ -35,15 +35,9 @@ public class EventDector {
         this.dbscanMinPoints = 2;
     }
 
-    public DataStream<Feature>
-    computeInputSignal(DataStream<RawData> input) {
-        DataStream<Feature> output = input.windowAll(TumblingEventTimeWindows.of(Time.milliseconds(1000)))
-                .process(new ToFeatureProcessingFunc());
-        return output;
-    }
-
     public DataStream<DetectedEvent>
-    predict(List<Feature> input) {
+    predict(Window2 w2) {
+        List<KeyedFeature> input = w2.getElements();
 
         // forward pass
         this.updateClustering(input);
@@ -56,40 +50,25 @@ public class EventDector {
         return null;
     }
 
-    private class windowStreamMapper implements MapFunction<Feature, List<Feature>> {
-        private static final long serialVersionUID = -2289721819064535612L;
-        private List<Feature> w2; // window 2, to accpet each new pair of features (active and reactive power)
-
-        @Override
-        public List<Feature> map(Feature value) throws Exception {
-            if (this.w2.size() > EventDector.W2_SIZE) {
-                this.w2.remove(0);
-            }
-
-            this.w2.add(value);
-            return this.w2;
-        }
-    }
-
-    private void updateClustering(List<Feature> inputs) {
+    private void updateClustering(List<KeyedFeature> inputs) {
         // save point index in a map
-        Map<Feature, Integer> toIndex = new HashMap<Feature, Integer>();
+        Map<KeyedFeature, Integer> toIndex = new HashMap<KeyedFeature, Integer>();
         for (int i=0; i < inputs.size(); i++){
             toIndex.put(inputs.get(i), i);
         }
 
-        DBSCANClusterer<Feature> dbscan = new DBSCANClusterer<>(this.dbscanEps, this.dbscanMinPoints);
-        List<Cluster<Feature>> clusters = dbscan.cluster(inputs);
+        DBSCANClusterer<KeyedFeature> dbscan = new DBSCANClusterer<>(this.dbscanEps, this.dbscanMinPoints);
+        List<Cluster<KeyedFeature>> clusters = dbscan.cluster(inputs);
         Map<Integer, ClusterStructure> clusteringStructure = new HashMap<>();
         for(int cluster_i = 0; cluster_i < clusters.size(); cluster_i++){
-            Cluster<Feature> cluster = clusters.get(cluster_i);
+            Cluster<KeyedFeature> cluster = clusters.get(cluster_i);
 
             // calculate Loc
-            List<Feature> ls= cluster.getPoints();
+            List<KeyedFeature> ls= cluster.getPoints();
             int u = inputs.size()+1;
             int v = -1;
             List<Integer> idxLs = new ArrayList<>();
-            for (Feature each : ls){
+            for (KeyedFeature each : ls){
                 int idx = toIndex.get(each);
                 idxLs.add(idx);
                 v = idx>v?idx:v;
@@ -111,7 +90,6 @@ public class EventDector {
      */
     private List<Tuple3<Integer, Integer, List<Integer>>>
     checkEventModelConstraints() {
-        // It's better to use FlatMap here.
         return null;
     }
 
@@ -126,21 +104,5 @@ public class EventDector {
 
     private void rolebackBackwardPass() {
         // TO DO
-    }
-
-    private class ToFeatureProcessingFunc
-        extends ProcessAllWindowFunction<RawData, Feature, TimeWindow> {
-        private static final long serialVersionUID = -397143166557786027L;
-
-        @Override
-        public void process(Context context, Iterable<RawData> iterable, Collector<Feature> collector) throws Exception {
-            List<RawData> ls = new ArrayList<>();
-            iterable.forEach(ls::add);
-            double p = Metrics.activePower(ls);
-            double s = Metrics.apparentPower(ls);
-            double q = Metrics.reactivePower(s,p);
-            Feature point = new Feature(p,q);
-            collector.collect(point);
-        }
     }
 }

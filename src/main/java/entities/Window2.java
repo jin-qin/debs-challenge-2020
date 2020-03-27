@@ -1,34 +1,33 @@
 package entities;
 
-
 import java.util.*;
 
 public class Window2 {
     private final int MAX_SIZE = 100;
-    private Deque<Feature> w2 = new ArrayDeque<Feature>();
+    private Deque<KeyedFeature> w2 = new ArrayDeque<KeyedFeature>();
 
-    public void addElement(Feature point){
-        if (w2.size() == MAX_SIZE){
+    public Window2() {}
+    
+    public void addElement(KeyedFeature point) {
+        if (w2.size() == MAX_SIZE) {
             w2.removeFirst();
             w2.addLast(point);
-        }
-        else{
+        } else {
             w2.addLast(point);
         }
     }
 
 
-    public int size(){
+    public int size() {
         return w2.size();
     }
 
-    public List<Feature> getElements(){
-        List<Feature> ls = new ArrayList<>();
-        Iterator<Feature> it = w2.iterator();
-        while(it.hasNext()){
+    public List<KeyedFeature> getElements() {
+        List<KeyedFeature> ls = new ArrayList<>();
+        Iterator<KeyedFeature> it = w2.iterator();
+        while(it.hasNext()) {
             ls.add(it.next());
         }
         return ls;
     }
-
 }
