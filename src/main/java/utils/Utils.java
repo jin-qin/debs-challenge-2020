@@ -36,22 +36,35 @@ public class Utils {
     public static DataStream<Feature>
     computeInputSignal(DataStream<RawData> input) {
         DataStream<Feature> output = input.windowAll(TumblingEventTimeWindows.of(Time.milliseconds(1000)))
-                .process(new ToFeatureProcessingFunc());
+                .process(new ToFeatureProcessingFunc(1000));
         return output;
     }
 
     private static class ToFeatureProcessingFunc extends ProcessAllWindowFunction<RawData, Feature, TimeWindow> {
-    private static final long serialVersionUID = -397143166557786027L;
+        private int windowSize;
+        private static final long serialVersionUID = -397143166557786027L;
 
-    @Override
-    public void process(Context context, Iterable<RawData> iterable, Collector<Feature> collector) throws Exception {
-        List<RawData> ls = new ArrayList<>();
-        iterable.forEach(ls::add);
-        double p = Metrics.activePower(ls);
-        double s = Metrics.apparentPower(ls);
-        double q = Metrics.reactivePower(s,p);
-        Feature point = new Feature(p,q);
-        collector.collect(point);
+        public ToFeatureProcessingFunc(int windowSize){
+            super();
+            this.windowSize = windowSize;
+        }
+
+        @Override
+        public void process(Context context, Iterable<RawData> iterable, Collector<Feature> collector) throws Exception {
+            List<RawData> ls = new ArrayList<>();
+            iterable.forEach(ls::add);
+            long minIdx = Long.MAX_VALUE;
+            for (RawData each: ls){
+                if (each.i < minIdx){
+                    minIdx = each.i;
+                }
+            }
+            minIdx = minIdx / this.windowSize;
+            double p = Metrics.activePower(ls);
+            double s = Metrics.apparentPower(ls);
+            double q = Metrics.reactivePower(s,p);
+            Feature point = new Feature(minIdx, p, q);
+            collector.collect(point);
+        }
     }
-}
 }

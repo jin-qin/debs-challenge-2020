@@ -1,3 +1,6 @@
+package streaming;
+
+import entities.ClusterStructure;
 import entities.DetectedEvent;
 import entities.KeyedFeature;
 import entities.Window2;

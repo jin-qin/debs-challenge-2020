@@ -2,17 +2,24 @@ package entities;
 
 public class KeyedFeature extends Feature {
 
-    public long key; // -1 represents no key
+    public long key;
+    public long offset;
 
-    public KeyedFeature() { super(-1, -1); }
 
-    public KeyedFeature(long key, double f1, double f2) {
-        super(f1, f2);
+    public KeyedFeature(long key, long offset,long idx, double f1, double f2) {
+        super(idx, f1, f2);
         this.key = key;
+        this.offset = offset;
     }
 
     @Override
     public String toString() {
-        return String.format("entities.KeyedFeature{key=%d, f1=%f, f2=%f}", key, f1, f2);
+        return "KeyedFeature{" +
+                "key=" + key +
+                ", offset=" + offset +
+                ", idx=" + idx +
+                ", f1=" + f1 +
+                ", f2=" + f2 +
+                '}';
     }
 }
