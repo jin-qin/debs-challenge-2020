@@ -8,6 +8,7 @@ import entities.Window2;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.PriorityQueue;
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -17,7 +18,10 @@ import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
+import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 import utils.Config;
 
@@ -25,7 +29,8 @@ public class Query1Streaming {
     public static void start(DataStream<Feature> features) {
         features.flatMap(new AddKeyMapper())
                 .keyBy(e -> e.key)
-                .map(new PredictMapper());
+                .process(new PredictFunc())
+                .flatMap(new SortFlatMapper());
     }
 
     public static AddKeyMapper newAddKeyMapper() {
@@ -49,7 +54,7 @@ class AddKeyMapper implements FlatMapFunction<Feature, KeyedFeature> {
     }
 }
 
-class PredictMapper extends RichMapFunction<KeyedFeature, DetectedEvent> {
+class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent> {
     private static final long serialVersionUID = -5973216181346355124L;
 
     private ValueState<Window2> w2;
@@ -98,7 +103,10 @@ class PredictMapper extends RichMapFunction<KeyedFeature, DetectedEvent> {
     }
 
     @Override
-    public DetectedEvent map(KeyedFeature feature) throws Exception {
+    public void processElement(KeyedFeature feature, Context context, Collector<DetectedEvent> collector) throws Exception {
+
+        long partitionKey = context.getCurrentKey();
+
         batchCounter.update(batchCounter.value() + 1);
 
         Window2 w2_v = w2.value();
@@ -108,7 +116,7 @@ class PredictMapper extends RichMapFunction<KeyedFeature, DetectedEvent> {
         PredictedEvent e = ed.value().predict(w2.value());
 
         if (e == null)
-            return new DetectedEvent(batchCounter.value(), false, -1);
+            collector.collect(new DetectedEvent(batchCounter.value() + partitionKey * Config.partion_size, false, -1));
 
         int meanEventIndex = (e.eventStart + e.eventEnd) / 2;
 
@@ -119,6 +127,21 @@ class PredictMapper extends RichMapFunction<KeyedFeature, DetectedEvent> {
         windowStartIndex.update(windowStartIndex.value() + e.eventEnd);
         currentWindowStart.update(windowStartIndex.value());
 
-        return new DetectedEvent(batchCounter.value(), true, currentWindowStart.value() + meanEventIndex);
+        collector.collect(new DetectedEvent(batchCounter.value() + partitionKey * Config.partion_size, true, currentWindowStart.value() + meanEventIndex));
+    }
+}
+
+
+class SortFlatMapper implements FlatMapFunction<DetectedEvent, DetectedEvent>{
+
+    PriorityQueue<DetectedEvent> pqueue = new PriorityQueue<>();
+    long nextIdx = 0;
+
+    @Override
+    public void flatMap(DetectedEvent detectedEvent, Collector<DetectedEvent> collector) throws Exception {
+        pqueue.add(detectedEvent);
+        while(pqueue.peek().getWindowStart() == nextIdx){
+            collector.collect(pqueue.poll());
+        }
     }
 }

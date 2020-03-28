@@ -5,7 +5,7 @@ public class KeyedFeature extends Feature {
     public long key;
     public long offset;
 
-
+    // idx = key * partition_size + offset
     public KeyedFeature(long key, long offset,long idx, double f1, double f2) {
         super(idx, f1, f2);
         this.key = key;

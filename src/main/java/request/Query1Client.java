@@ -50,7 +50,6 @@ public class Query1Client {
         }
         return null;
     }
-
 //    private void sendPost() throws Exception {
 //
 //        HttpPost post = new HttpPost("https://httpbin.org/post");

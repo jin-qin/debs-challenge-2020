@@ -1,14 +1,38 @@
 package entities;
 
 public class DetectedEvent {
-    private int windowStart;
+    private long windowStart;
     private boolean eventDetected;
-    private int eventIndMean;
+    private long eventIndMean;
 
-    public DetectedEvent(int s, boolean d, int event_s) {
+    public DetectedEvent(long s, boolean d, long event_s) {
         this.windowStart = s;
         this.eventDetected = d;
         this.eventIndMean = event_s;
+    }
+
+    public long getWindowStart() {
+        return windowStart;
+    }
+
+    public void setWindowStart(long windowStart) {
+        this.windowStart = windowStart;
+    }
+
+    public boolean isEventDetected() {
+        return eventDetected;
+    }
+
+    public void setEventDetected(boolean eventDetected) {
+        this.eventDetected = eventDetected;
+    }
+
+    public long getEventIndMean() {
+        return eventIndMean;
+    }
+
+    public void setEventIndMean(long eventIndMean) {
+        this.eventIndMean = eventIndMean;
     }
 
     @Override
