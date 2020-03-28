@@ -74,39 +74,40 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
                         "window2", // the state name
                         TypeInformation.of(new TypeHint<Window2>() {})); // type information
         w2 = getRuntimeContext().getState(descriptorW2);
-        w2.update(new Window2());
 
         ValueStateDescriptor<EventDector> descriptorEventDector =
                 new ValueStateDescriptor<>(
                         "EventDector", // the state name
                         TypeInformation.of(new TypeHint<EventDector>() {})); // type information
         ed = getRuntimeContext().getState(descriptorEventDector);
-        ed.update(new EventDector());
 
         ValueStateDescriptor<Integer> descriptorWindowStartIndex =
                 new ValueStateDescriptor<>(
                         "WindowStartIndex", // the state name
                         TypeInformation.of(new TypeHint<Integer>() {})); // type information
         windowStartIndex = getRuntimeContext().getState(descriptorWindowStartIndex);
-        windowStartIndex.update(1); // why 1?
-
+        
         ValueStateDescriptor<Integer> descriptorCurrentWindowStart =
                 new ValueStateDescriptor<>(
                         "CurrentWindowStart", // the state name
                         TypeInformation.of(new TypeHint<Integer>() {})); // type information
         currentWindowStart = getRuntimeContext().getState(descriptorCurrentWindowStart);
-        currentWindowStart.update(1); // why 1?
 
         ValueStateDescriptor<Integer> descriptorBatchCounter=
                 new ValueStateDescriptor<>(
                         "BatchCounter", // the state name
                         TypeInformation.of(new TypeHint<Integer>() {})); // type information
         batchCounter = getRuntimeContext().getState(descriptorBatchCounter);
-        batchCounter.update(0);
     }
 
     @Override
     public void processElement(KeyedFeature feature, Context context, Collector<DetectedEvent> collector) throws Exception {
+
+        if (w2.value() == null) w2.update(new Window2());
+        if (ed.value() == null) ed.update(new EventDector());
+        if (windowStartIndex.value() == null) windowStartIndex.update(1); // why 1?
+        if (currentWindowStart.value() == null) currentWindowStart.update(1); // why 1?
+        if (batchCounter.value() == null) batchCounter.update(0);
 
         long partitionKey = context.getCurrentKey();
 
@@ -137,7 +138,7 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 
 class SortFlatMapper implements FlatMapFunction<DetectedEvent, DetectedEvent>{
     private static final long serialVersionUID = 5840447412541874914L;
-    
+
     PriorityQueue<DetectedEvent> pqueue = new PriorityQueue<>();
     long nextIdx = 0;
 

@@ -30,7 +30,7 @@ public class Main {
 
         // start the data generator
         DataStream<RawData> input = env
-                .addSource(new DataSource())
+                .addSource(new DataSource(400))
                 .setParallelism(1);
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
