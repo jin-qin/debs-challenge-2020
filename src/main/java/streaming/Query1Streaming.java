@@ -120,9 +120,18 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         w2_v.addElement(feature);
         w2.update(w2_v);
 
-        System.out.println(w2.value().getElements());
-        
+        if (Config.debug){
+            if (feature.idx == 317){
+                System.out.println(">>>> 317 stage");
+                System.out.println(w2.value());
+            }
+        }
         PredictedEvent e = ed.value().predict(w2.value());
+
+//        if (Config.debug){
+//            System.out.println(e);
+//        }
+
         if (e == null) {
             if (feature.key > 0 && feature.offset < Config.w2_size) return;
 

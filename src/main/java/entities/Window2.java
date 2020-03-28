@@ -41,4 +41,9 @@ public class Window2 {
         }
         return ls;
     }
+
+    @Override
+    public String toString() {
+        return "Window2： " + w2;
+    }
 }

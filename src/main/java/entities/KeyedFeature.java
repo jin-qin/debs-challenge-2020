@@ -1,5 +1,7 @@
 package entities;
 
+import utils.Config;
+
 public class KeyedFeature extends Feature {
 
     public long key;
@@ -14,6 +16,9 @@ public class KeyedFeature extends Feature {
 
     @Override
     public String toString() {
+        if (Config.debug){
+            return "[" + key + ", "  + offset + "," + idx + ", " + f1 + ", " + f2 + "]";
+        }
         return "KeyedFeature{" +
                 "key=" + key +
                 ", offset=" + offset +
