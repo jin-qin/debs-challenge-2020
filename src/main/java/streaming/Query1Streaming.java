@@ -60,8 +60,8 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
     private ValueState<Window2> w2;
     private ValueState<EventDector> ed;
 
-    private ValueState<Integer> windowStartIndex;
-    private ValueState<Integer> currentWindowStart;
+    private ValueState<Long> windowStartIndex;
+    private ValueState<Long> currentWindowStart;
 
     private MapState<Long, KeyedFeature> mapTsFeature;
 
@@ -79,16 +79,16 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
                         TypeInformation.of(new TypeHint<EventDector>() {})); // type information
         ed = getRuntimeContext().getState(descriptorEventDector);
 
-        ValueStateDescriptor<Integer> descriptorWindowStartIndex =
+        ValueStateDescriptor<Long> descriptorWindowStartIndex =
                 new ValueStateDescriptor<>(
                         "WindowStartIndex", // the state name
-                        TypeInformation.of(new TypeHint<Integer>() {})); // type information
+                        TypeInformation.of(new TypeHint<Long>() {})); // type information
         windowStartIndex = getRuntimeContext().getState(descriptorWindowStartIndex);
         
-        ValueStateDescriptor<Integer> descriptorCurrentWindowStart =
+        ValueStateDescriptor<Long> descriptorCurrentWindowStart =
                 new ValueStateDescriptor<>(
                         "CurrentWindowStart", // the state name
-                        TypeInformation.of(new TypeHint<Integer>() {})); // type information
+                        TypeInformation.of(new TypeHint<Long>() {})); // type information
         currentWindowStart = getRuntimeContext().getState(descriptorCurrentWindowStart);
 
         MapStateDescriptor<Long, KeyedFeature> descriptorMapTsEvent = 
@@ -103,8 +103,8 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
     public void processElement(KeyedFeature feature, Context context, Collector<DetectedEvent> collector) throws Exception {
         if (w2.value() == null) w2.update(new Window2());
         if (ed.value() == null) ed.update(new EventDector());
-        if (windowStartIndex.value() == null) windowStartIndex.update(1); // why 1?
-        if (currentWindowStart.value() == null) currentWindowStart.update(1); // why 1?
+        if (windowStartIndex.value() == null) windowStartIndex.update(feature.idx + 1); // why 1?
+        if (currentWindowStart.value() == null) currentWindowStart.update(feature.idx + 1); // why 1?
 
         long ts = context.timestamp();
         mapTsFeature.put(ts, feature);
@@ -117,20 +117,34 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         mapTsFeature.remove(timestamp);
 
         Window2 w2_v = w2.value();
+        // if (w2_v.size() <= 0) {
+        //     windowStartIndex.update(feature.idx + 1);
+        //     currentWindowStart.update(feature.idx + 1);
+        // }
         w2_v.addElement(feature);
         w2.update(w2_v);
 
-        if (Config.debug){
-            if (feature.idx == 317){
+        if (Config.debug) {
+            if (feature.idx == 317) {
                 System.out.println(">>>> 317 stage");
             }
         }
+        
         PredictedEvent e = ed.value().predict(w2.value());
 
         if (e == null) {
+            if (w2_v.size() > Config.w2_size) {
+                // w2_v.clear();
+                w2_v.removeFirst();
+                w2.update(w2_v);
+
+                windowStartIndex.update(windowStartIndex.value() + 1);
+                currentWindowStart.update(windowStartIndex.value() + 1);
+            }
+
             if (feature.key > 0 && feature.offset < Config.w2_size) return;
 
-            out.collect(new DetectedEvent((timestamp + 1) / 1000 - 1, false, -1));
+            out.collect(new DetectedEvent(feature.idx, false, -1));
             return;
         }
 
@@ -141,11 +155,12 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         w2.update(w2_v);
 
         windowStartIndex.update(windowStartIndex.value() + e.eventEnd);
+        Long tmpCurrentWindowStart = currentWindowStart.value();
         currentWindowStart.update(windowStartIndex.value());
 
         if (feature.key > 0 && feature.offset < Config.w2_size) return;
 
-        out.collect(new DetectedEvent((timestamp + 1) / 1000 - 1, true, currentWindowStart.value() + meanEventIndex));
+        out.collect(new DetectedEvent(feature.idx, true, tmpCurrentWindowStart + meanEventIndex));
     }
 }
 

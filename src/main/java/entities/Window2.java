@@ -11,14 +11,24 @@ public class Window2 {
     public Window2() {}
     
     public void addElement(KeyedFeature point) {
-        if (w2.size() >= MAX_SIZE) {
-            w2.removeFirst();
-            w2.addLast(point);
-        } else {
-            w2.addLast(point);
-        }
+        // if (w2.size() > MAX_SIZE + 1) {
+        //     w2.clear();
+        //     w2.removeFirst();
+        //     w2.addLast(point);
+        // } else {
+        //     w2.addLast(point);
+        // }
+
+        w2.addLast(point);
     }
 
+    public void removeFirst() {
+        w2.removeFirst();
+    }
+
+    public void clear() {
+        w2.clear();
+    }
 
     public int size() {
         return w2.size();
