@@ -128,10 +128,6 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         }
         PredictedEvent e = ed.value().predict(w2.value());
 
-//        if (Config.debug){
-//            System.out.println(e);
-//        }
-
         if (e == null) {
             if (feature.key > 0 && feature.offset < Config.w2_size) return;
 

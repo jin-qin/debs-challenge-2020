@@ -64,6 +64,11 @@ public class Utils {
             double p = Metrics.activePower(ls);
             double s = Metrics.apparentPower(ls);
             double q = Metrics.reactivePower(s,p);
+            
+            if (Config.use_log) {
+                p = Math.log(p);
+                q = Math.log(q);
+            }
             Feature point = new Feature(minIdx, p, q);
             collector.collect(point);
         }

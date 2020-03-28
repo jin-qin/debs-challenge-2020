@@ -39,7 +39,6 @@ public class StreamTest {
     public void predictTest() throws Exception{
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
-        // env.setParallelism(2);
 
         // start the data generator
         DataStream<RawData> input = env
