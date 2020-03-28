@@ -133,7 +133,8 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 
 
 class SortFlatMapper implements FlatMapFunction<DetectedEvent, DetectedEvent>{
-
+    private static final long serialVersionUID = 5840447412541874914L;
+    
     PriorityQueue<DetectedEvent> pqueue = new PriorityQueue<>();
     long nextIdx = 0;
 

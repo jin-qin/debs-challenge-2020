@@ -39,4 +39,8 @@ public class DetectedEvent {
     public String toString() {
         return String.format("DetectedEvent{windowStart:%d, eventDetected:%b, eventIndMean:%d}", windowStart, eventDetected, eventIndMean);
     }
+
+    public String toJson() {
+        return String.format("{'s':%d, 'd':%b, 'event_s':%d}", windowStart, eventDetected, eventIndMean);
+    }
 }

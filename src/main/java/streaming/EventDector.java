@@ -1,7 +1,6 @@
 package streaming;
 
 import entities.ClusterStructure;
-import entities.DetectedEvent;
 import entities.KeyedFeature;
 import entities.PredictedEvent;
 import entities.Window2;
@@ -10,10 +9,8 @@ import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
-import org.apache.flink.streaming.api.datastream.DataStream;
 
 import utils.*;
-import java.security.Key;
 import java.util.*;
 
 public class EventDector {
