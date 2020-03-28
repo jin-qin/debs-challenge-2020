@@ -7,6 +7,8 @@ import entities.PredictedEvent;
 import entities.Window2;
 
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -32,7 +34,8 @@ public class Query1Streaming {
         DataStream<DetectedEvent> result = features.flatMap(new AddKeyMapper())
                 .keyBy(e -> e.key)
                 .process(new PredictFunc())
-                .flatMap(new SortFlatMapper());
+                .flatMap(new SortFlatMapper())
+                .setParallelism(1);
         return result;
     }
 
@@ -102,7 +105,6 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 
     @Override
     public void processElement(KeyedFeature feature, Context context, Collector<DetectedEvent> collector) throws Exception {
-
         if (w2.value() == null) w2.update(new Window2());
         if (ed.value() == null) ed.update(new EventDector());
         if (windowStartIndex.value() == null) windowStartIndex.update(1); // why 1?
@@ -111,6 +113,7 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 
         long partitionKey = context.getCurrentKey();
 
+        int batchCounter_v = batchCounter.value();
         batchCounter.update(batchCounter.value() + 1);
 
         Window2 w2_v = w2.value();
@@ -120,7 +123,7 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         PredictedEvent e = ed.value().predict(w2.value());
 
         if (e == null) {
-            collector.collect(new DetectedEvent(batchCounter.value() + partitionKey * Config.partion_size, false, -1));
+            collector.collect(new DetectedEvent(batchCounter_v + partitionKey * Config.partion_size, false, -1));
             return;
         }
 
@@ -141,14 +144,35 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 class SortFlatMapper implements FlatMapFunction<DetectedEvent, DetectedEvent>{
     private static final long serialVersionUID = 5840447412541874914L;
 
-    PriorityQueue<DetectedEvent> pqueue = new PriorityQueue<>();
+    private PriorityQueue<DetectedEvent> pqueue = new PriorityQueue<>(new DetectedEventComparator());
     long nextIdx = 0;
 
     @Override
     public void flatMap(DetectedEvent detectedEvent, Collector<DetectedEvent> collector) throws Exception {
         pqueue.add(detectedEvent);
-        while(pqueue.peek().getWindowStart() == nextIdx){
-            collector.collect(pqueue.poll());
+        System.out.println("> 1: " + detectedEvent + ", size: " + pqueue.size());
+        while(pqueue.size() > 0 && pqueue.peek().getWindowStart() == nextIdx){
+            DetectedEvent e = pqueue.poll();
+
+            System.out.println("> 2: " + e + ", size: " + pqueue.size());
+
+            collector.collect(e);
+            nextIdx++;
         }
     }
+}
+
+class DetectedEventComparator implements Comparator<DetectedEvent>, Serializable { 
+    private static final long serialVersionUID = 4361874715073716094L;
+
+    public DetectedEventComparator() { }
+
+    public int compare(DetectedEvent e1, DetectedEvent e2) 
+    {
+        long v1 = e1.getWindowStart();
+        long v2 = e2.getWindowStart();
+        if (v1 < v2) return 1;
+        if (v1 == v2) return 0;
+        return -1;
+    } 
 }

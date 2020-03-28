@@ -6,7 +6,6 @@ import entities.PredictedEvent;
 import entities.RawData;
 import entities.Window2;
 
-import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -14,11 +13,7 @@ import org.apache.flink.util.Collector;
 
 import request.DataSource;
 import streaming.Query1Streaming;
-import utils.Config;
 import utils.Utils;
-
-import java.security.Key;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Main {
     public static void main(String[] args) throws Exception{
@@ -30,12 +25,12 @@ public class Main {
 
         // start the data generator
         DataStream<RawData> input = env
-                .addSource(new DataSource(400))
+                .addSource(new DataSource(500))
                 .setParallelism(1);
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
         DataStream<DetectedEvent> result = Query1Streaming.start(features);
-        result.print();
+        // result.print();
         env.execute("Number of busy machines every 5 minutes over the last 15 minutes");
 
     }

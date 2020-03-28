@@ -90,15 +90,15 @@ public class EventDector {
         }
 
         DBSCANClusterer<KeyedFeature> dbscan = new DBSCANClusterer<>(this.dbscanEps, this.dbscanMinPoints);
-        System.out.println(points);
+        // System.out.println(points);
         List<Cluster<KeyedFeature>> clusters = dbscan.cluster(points);
         Map<Integer, ClusterStructure> clusteringStructure = new HashMap<>();
-        System.out.println(clusters);
+        // System.out.println(clusters);
         for(int cluster_i = 0; cluster_i < clusters.size(); cluster_i++){
             // calculate Loc
             List<KeyedFeature> ls = clusters.get(cluster_i).getPoints();
-            System.out.println(cluster_i);
-            System.out.println(ls);
+            // System.out.println(cluster_i);
+            // System.out.println(ls);
             ClusterStructure clusterStructure = extractClusterStructure(ls, indexMap);
             points.removeAll(ls);
             clusteringStructure.put(cluster_i, clusterStructure);
