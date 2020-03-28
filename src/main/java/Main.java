@@ -34,7 +34,8 @@ public class Main {
                 .setParallelism(1);
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
-        Query1Streaming.start(features);
+        DataStream<DetectedEvent> result = Query1Streaming.start(features);
+        result.print();
         env.execute("Number of busy machines every 5 minutes over the last 15 minutes");
 
     }
