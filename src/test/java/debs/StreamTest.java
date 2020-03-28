@@ -15,7 +15,7 @@ import utils.Utils;
 public class StreamTest {
 
     @Test
-    public void keyedFeatureTest() throws Exception{
+    public void keyedFeatureTest() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
@@ -28,5 +28,10 @@ public class StreamTest {
         DataStream<DetectedEvent> result = Query1Streaming.start(features);
         result.print();
         env.execute("Number of busy machines every 5 minutes over the last 15 minutes");
+    }
+
+    @Test
+    public void computeAndEvaluateLossTest() throws Exception {
+
     }
 }

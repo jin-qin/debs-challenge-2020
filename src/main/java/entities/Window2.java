@@ -11,7 +11,7 @@ public class Window2 {
     public Window2() {}
     
     public void addElement(KeyedFeature point) {
-        if (w2.size() == MAX_SIZE) {
+        if (w2.size() >= MAX_SIZE) {
             w2.removeFirst();
             w2.addLast(point);
         } else {

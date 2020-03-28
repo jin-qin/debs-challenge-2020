@@ -26,7 +26,7 @@ public class Main {
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
         DataStream<DetectedEvent> result = Query1Streaming.start(features);
-        result.print();
+        // result.print();
         env.execute("Number of busy machines every 5 minutes over the last 15 minutes");
     }
 

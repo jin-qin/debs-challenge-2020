@@ -63,7 +63,7 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
     private ValueState<Integer> windowStartIndex;
     private ValueState<Integer> currentWindowStart;
 
-    private MapState<Long, DetectedEvent> mapTsDetectedEvent;
+    private MapState<Long, KeyedFeature> mapTsFeature;
 
     @Override
     public void open(Configuration config) throws IOException {
@@ -91,12 +91,12 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
                         TypeInformation.of(new TypeHint<Integer>() {})); // type information
         currentWindowStart = getRuntimeContext().getState(descriptorCurrentWindowStart);
 
-        MapStateDescriptor<Long, DetectedEvent> descriptorMapTsEvent = 
-                new MapStateDescriptor<Long, DetectedEvent>(
-                    "MapTsEvent", 
+        MapStateDescriptor<Long, KeyedFeature> descriptorMapTsEvent = 
+                new MapStateDescriptor<Long, KeyedFeature>(
+                    "MapTsFeature", 
                     Long.TYPE, 
-                    DetectedEvent.class);
-        mapTsDetectedEvent = getRuntimeContext().getMapState(descriptorMapTsEvent);
+                    KeyedFeature.class);
+        mapTsFeature = getRuntimeContext().getMapState(descriptorMapTsEvent);
     }
 
     @Override
@@ -106,18 +106,27 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         if (windowStartIndex.value() == null) windowStartIndex.update(1); // why 1?
         if (currentWindowStart.value() == null) currentWindowStart.update(1); // why 1?
 
+        long ts = context.timestamp();
+        mapTsFeature.put(ts, feature);
+        context.timerService().registerEventTimeTimer(ts);
+    }
+
+    @Override
+    public void onTimer(long timestamp, OnTimerContext ctx, Collector<DetectedEvent> out) throws Exception {
+        KeyedFeature feature = mapTsFeature.get(timestamp);
+        mapTsFeature.remove(timestamp);
+
         Window2 w2_v = w2.value();
         w2_v.addElement(feature);
         w2.update(w2_v);
 
-        long ts = context.timestamp();
-
+        System.out.println(w2.value().getElements());
+        
         PredictedEvent e = ed.value().predict(w2.value());
         if (e == null) {
             if (feature.key > 0 && feature.offset < Config.w2_size) return;
 
-            mapTsDetectedEvent.put(ts, new DetectedEvent((ts + 1) / 1000 - 1, false, -1));
-            context.timerService().registerEventTimeTimer(ts);
+            out.collect(new DetectedEvent((timestamp + 1) / 1000 - 1, false, -1));
             return;
         }
 
@@ -132,15 +141,7 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 
         if (feature.key > 0 && feature.offset < Config.w2_size) return;
 
-        mapTsDetectedEvent.put(ts, new DetectedEvent((ts + 1) / 1000 - 1, true, currentWindowStart.value() + meanEventIndex));
-        context.timerService().registerEventTimeTimer(ts);
-    }
-
-    @Override
-    public void onTimer(long timestamp, OnTimerContext ctx, Collector<DetectedEvent> out) throws Exception {
-        DetectedEvent e = mapTsDetectedEvent.get(timestamp);
-        mapTsDetectedEvent.remove(timestamp);
-        out.collect(e);
+        out.collect(new DetectedEvent((timestamp + 1) / 1000 - 1, true, currentWindowStart.value() + meanEventIndex));
     }
 }
 
