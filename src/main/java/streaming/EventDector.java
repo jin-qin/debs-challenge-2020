@@ -137,7 +137,7 @@ public class EventDector {
 
         if (n_non_noise_clusters < 2) return null; //check (1) not passed
 
-        Map<Integer, ClusterStructure> check_two_clustering = new HashMap(); //store the clusters that pass the test in a new structure
+        Map<Integer, ClusterStructure> check_two_clustering = new HashMap<>(); //store the clusters that pass the test in a new structure
 
         for (Map.Entry<Integer, ClusterStructure> cluster_i_structure : this.clusteringStructure.entrySet()){
             if (cluster_i_structure.getKey() != -1) { // for all non noise clusters

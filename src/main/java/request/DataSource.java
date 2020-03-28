@@ -1,7 +1,6 @@
 package request;
 
 import entities.RawData;
-import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import utils.Utils;
 

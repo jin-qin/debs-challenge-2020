@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.state.MapState;
+import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeHint;
@@ -27,8 +29,7 @@ public class Query1Streaming {
     public static DataStream<DetectedEvent> start(DataStream<Feature> features) {
         DataStream<DetectedEvent> result = features.flatMap(new AddKeyMapper())
                 .keyBy(e -> e.key)
-                .process(new PredictFunc())
-                .flatMap(new SortFlatMapper());
+                .process(new PredictFunc());
         return result;
     }
 
@@ -61,7 +62,8 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 
     private ValueState<Integer> windowStartIndex;
     private ValueState<Integer> currentWindowStart;
-    private ValueState<Integer> batchCounter;
+
+    private MapState<Long, DetectedEvent> mapTsDetectedEvent;
 
     @Override
     public void open(Configuration config) throws IOException {
@@ -89,11 +91,12 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
                         TypeInformation.of(new TypeHint<Integer>() {})); // type information
         currentWindowStart = getRuntimeContext().getState(descriptorCurrentWindowStart);
 
-        ValueStateDescriptor<Integer> descriptorBatchCounter=
-                new ValueStateDescriptor<>(
-                        "BatchCounter", // the state name
-                        TypeInformation.of(new TypeHint<Integer>() {})); // type information
-        batchCounter = getRuntimeContext().getState(descriptorBatchCounter);
+        MapStateDescriptor<Long, DetectedEvent> descriptorMapTsEvent = 
+                new MapStateDescriptor<Long, DetectedEvent>(
+                    "MapTsEvent", 
+                    Long.TYPE, 
+                    DetectedEvent.class);
+        mapTsDetectedEvent = getRuntimeContext().getMapState(descriptorMapTsEvent);
     }
 
     @Override
@@ -102,23 +105,19 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         if (ed.value() == null) ed.update(new EventDector());
         if (windowStartIndex.value() == null) windowStartIndex.update(1); // why 1?
         if (currentWindowStart.value() == null) currentWindowStart.update(1); // why 1?
-        if (batchCounter.value() == null) batchCounter.update(0);
-
-        long partitionKey = context.getCurrentKey();
-
-        int batchCounter_v = batchCounter.value();
-        batchCounter.update(batchCounter.value() + 1);
 
         Window2 w2_v = w2.value();
         w2_v.addElement(feature);
         w2.update(w2_v);
 
+        long ts = context.timestamp();
+
         PredictedEvent e = ed.value().predict(w2.value());
-        // System.out.println(String.format("> 0: key:%d, counter: %d, offset: %d", feature.key, batchCounter_v, feature.offset));
         if (e == null) {
             if (feature.key > 0 && feature.offset < Config.w2_size) return;
-            // System.out.println(String.format("> 1: key:%d, counter: %d", feature.key, batchCounter_v));
-            collector.collect(new DetectedEvent(batchCounter_v + partitionKey * Config.partion_size, false, -1));
+
+            mapTsDetectedEvent.put(ts, new DetectedEvent((ts + 1) / 1000 - 1, false, -1));
+            context.timerService().registerEventTimeTimer(ts);
             return;
         }
 
@@ -132,11 +131,18 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         currentWindowStart.update(windowStartIndex.value());
 
         if (feature.key > 0 && feature.offset < Config.w2_size) return;
-        // System.out.println(String.format("> 1: key:%d, counter: %d", feature.key, batchCounter_v));
-        collector.collect(new DetectedEvent(batchCounter.value() + partitionKey * Config.partion_size, true, currentWindowStart.value() + meanEventIndex));
+
+        mapTsDetectedEvent.put(ts, new DetectedEvent((ts + 1) / 1000 - 1, true, currentWindowStart.value() + meanEventIndex));
+        context.timerService().registerEventTimeTimer(ts);
+    }
+
+    @Override
+    public void onTimer(long timestamp, OnTimerContext ctx, Collector<DetectedEvent> out) throws Exception {
+        DetectedEvent e = mapTsDetectedEvent.get(timestamp);
+        mapTsDetectedEvent.remove(timestamp);
+        out.collect(e);
     }
 }
-
 
 class SortFlatMapper implements FlatMapFunction<DetectedEvent, DetectedEvent>{
     private static final long serialVersionUID = 5840447412541874914L;
