@@ -9,6 +9,8 @@ import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.datastream.DataStream;
+
+import java.security.Key;
 import java.util.*;
 
 public class EventDector {
@@ -20,7 +22,7 @@ public class EventDector {
     private Map<Integer, ClusterStructure> clusteringStructure;
 
     public EventDector() {
-        this.dbscanEps = 0.03;
+        this.dbscanEps = 0.05;
         this.dbscanMinPoints = 2;
     }
 
@@ -39,35 +41,53 @@ public class EventDector {
         return null;
     }
 
-    private void updateClustering(List<KeyedFeature> inputs) {
+    public Map<Integer, ClusterStructure> getClusteringStructure() {
+        return clusteringStructure;
+    }
+
+    public void updateClustering(List<KeyedFeature> input) {
         // save point index in a map
-        Map<KeyedFeature, Integer> toIndex = new HashMap<KeyedFeature, Integer>();
-        for (int i=0; i < inputs.size(); i++){
-            toIndex.put(inputs.get(i), i);
+        List<KeyedFeature> points = new ArrayList<>();
+        points.addAll(input);
+
+        Map<KeyedFeature, Integer> indexMap = new HashMap<KeyedFeature, Integer>();
+        for (int i=0; i < points.size(); i++){
+            indexMap.put(points.get(i), i);
         }
 
         DBSCANClusterer<KeyedFeature> dbscan = new DBSCANClusterer<>(this.dbscanEps, this.dbscanMinPoints);
-        List<Cluster<KeyedFeature>> clusters = dbscan.cluster(inputs);
+        System.out.println(points);
+        List<Cluster<KeyedFeature>> clusters = dbscan.cluster(points);
         Map<Integer, ClusterStructure> clusteringStructure = new HashMap<>();
+        System.out.println(clusters);
         for(int cluster_i = 0; cluster_i < clusters.size(); cluster_i++){
-            Cluster<KeyedFeature> cluster = clusters.get(cluster_i);
-
             // calculate Loc
-            List<KeyedFeature> ls= cluster.getPoints();
-            int u = inputs.size()+1;
-            int v = -1;
-            List<Integer> idxLs = new ArrayList<>();
-            for (KeyedFeature each : ls){
-                int idx = toIndex.get(each);
-                idxLs.add(idx);
-                v = idx>v?idx:v;
-                u = idx<u?idx:u;
-            }
-            double loc = ls.size()/(v-u+1);
-            ClusterStructure clusterStructure = new ClusterStructure(idxLs, u, v, loc);
+            List<KeyedFeature> ls = clusters.get(cluster_i).getPoints();
+            System.out.println(cluster_i);
+            System.out.println(ls);
+            ClusterStructure clusterStructure = extractClusterStructure(ls, indexMap);
+            points.removeAll(ls);
             clusteringStructure.put(cluster_i, clusterStructure);
         }
+        if (points.size() > 0){
+            clusteringStructure.put(-1, extractClusterStructure(points, indexMap));
+        }
         this.clusteringStructure = clusteringStructure;
+    }
+
+    private ClusterStructure extractClusterStructure(List<KeyedFeature> ls, Map<KeyedFeature, Integer> indexMap){
+        int u = indexMap.keySet().size()+1;
+        int v = -1;
+        List<Integer> idxLs = new ArrayList<>();
+        for (KeyedFeature each : ls){
+            int idx = indexMap.get(each);
+            idxLs.add(idx);
+            v = idx>v?idx:v;
+            u = idx<u?idx:u;
+        }
+        double loc = ls.size()/(v-u+1);
+        ClusterStructure clusterStructure = new ClusterStructure(idxLs, u, v, loc);
+        return clusterStructure;
     }
 
     /**

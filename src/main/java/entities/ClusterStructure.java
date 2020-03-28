@@ -15,4 +15,13 @@ public class ClusterStructure {
         this.loc = loc;
     }
 
+    @Override
+    public String toString() {
+        return "ClusterStructure{" +
+                "idxList=" + idxList +
+                ", u=" + u +
+                ", v=" + v +
+                ", loc=" + loc +
+                '}';
+    }
 }
