@@ -3,6 +3,7 @@ package streaming;
 import entities.ClusterStructure;
 import entities.DetectedEvent;
 import entities.KeyedFeature;
+import entities.PredictedEvent;
 import entities.Window2;
 
 import org.apache.commons.math3.ml.clustering.Cluster;
@@ -15,30 +16,63 @@ import java.util.*;
 
 public class EventDector {
 
-    private double dbscanEps;
-    private int dbscanMinPoints;
+    private double dbscanEps = 0.03;
+    private int dbscanMinPoints = 2;
     private int lossThresh = 40;
 
     private Map<Integer, ClusterStructure> clusteringStructure;
+    private Map<Integer, ClusterStructure> forwardClusteringStructure;
+    private Map<Integer, ClusterStructure> backwardClusteringStructure;
 
     public EventDector() {
         this.dbscanEps = 0.05;
         this.dbscanMinPoints = 2;
     }
 
-    public DataStream<DetectedEvent>
+    public PredictedEvent
     predict(Window2 w2) {
+
         List<KeyedFeature> input = w2.getElements();
 
         // forward pass
         this.updateClustering(input);
 
         List<Tuple3<Integer, Integer, List<Integer>>> checkedClusters = this.checkEventModelConstraints();
+
+        if (checkedClusters == null) return null; // add the next new_datapoint. We go back to step 1 of the forward pass.
         
         Tuple3<Integer, Integer, List<Integer>> eventClusterCombination = this.computeAndEvaluateLoss(checkedClusters);
+        
+        this.forwardClusteringStructure = this.clusteringStructure; // save the forward clustering structure
+
+        if (eventClusterCombination == null) return null; // event not detected, go back to step 1 and add the next sample
 
         // if event detected, start backward pass
-        return null;
+        this.backwardClusteringStructure = this.forwardClusteringStructure;
+        Tuple3<Integer, Integer, List<Integer>> eventClusterCombinationBalanced = eventClusterCombination;
+        
+        for (int i = 1; i < input.size() - 1; i++) {
+            List<KeyedFeature> inputCut = input.subList(i, input.size() - 1);
+
+            this.updateClustering(inputCut);
+            checkedClusters = this.checkEventModelConstraints();
+            if (checkedClusters == null) {  // roleback with break
+                eventClusterCombinationBalanced = this.rolebackBackwardPass("break", eventClusterCombinationBalanced, i, null);
+                break;  // finished
+            } else {    // compute the loss
+                Tuple3<Integer, Integer, List<Integer>> eventClusterCombinationBelowLoss = this.computeAndEvaluateLoss(checkedClusters);
+                if (eventClusterCombinationBelowLoss == null) { // roleback with break
+                    eventClusterCombinationBalanced = this.rolebackBackwardPass("break", eventClusterCombinationBalanced, i, null);
+                    break;  // finished
+                } else {
+                    eventClusterCombinationBalanced = this.rolebackBackwardPass("continue", eventClusterCombinationBalanced, i, eventClusterCombinationBelowLoss);
+                }
+            }
+        }
+
+        int eventStart = eventClusterCombinationBalanced.f2.get(0);
+        int eventEnd = eventClusterCombinationBalanced.f2.get(eventClusterCombinationBalanced.f2.size() - 1);
+        return new PredictedEvent(eventStart, eventEnd);
     }
 
     public Map<Integer, ClusterStructure> getClusteringStructure() {
@@ -137,8 +171,14 @@ public class EventDector {
         return null;
     }
 
-    private void rolebackBackwardPass() {
+    private Tuple3<Integer, Integer, List<Integer>>
+    rolebackBackwardPass(String status, 
+                        Tuple3<Integer, Integer, List<Integer>> eventClusterCombinationBalanced,
+                        int i,
+                        Tuple3<Integer, Integer, List<Integer>> eventClusterCombinationBelowLoss) {
         // TO DO
+
+        return null;
     }
 
     private Tuple3<Integer, Integer, Integer> computeErrorNumbers(List<Integer> c1Indices, List<Integer> c2Indices, 
