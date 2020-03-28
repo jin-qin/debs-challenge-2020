@@ -19,6 +19,7 @@ public class EventDector {
     private int dbscanMinPoints = 2;
     private int lossThresh = 40;
     private double temp_eps = 0.8;
+    private boolean debug = false;
 
     private Map<Integer, ClusterStructure> clusteringStructure;
     private Map<Integer, ClusterStructure> forwardClusteringStructure;
@@ -129,9 +130,12 @@ public class EventDector {
      * in the c1 - c2 cluster-combination, that have passed the model
      * checks. The event_interval_t are the indices of the datapoints in between the two clusters.
      */
+
     private List<Tuple3<Integer, Integer, List<Integer>>> checkEventModelConstraints() {
-        int n_with_noise_clusters = this.clusteringStructure.size();
-        int n_non_noise_clusters =  this.clusteringStructure.containsKey(-1) ? n_with_noise_clusters - 1 : n_with_noise_clusters;
+
+        int n_non_noise_clusters =  this.clusteringStructure.containsKey(-1) ? this.clusteringStructure.size() - 1 : this.clusteringStructure.size();
+
+        if (this.debug) System.out.println("Number of non noise_clusters: "+ n_non_noise_clusters);
 
         if (n_non_noise_clusters < 2) return null; //check (1) not passed
 
@@ -139,11 +143,16 @@ public class EventDector {
 
         for (Map.Entry<Integer, ClusterStructure> cluster_i_structure : this.clusteringStructure.entrySet()){
             if (cluster_i_structure.getKey() != -1) { // for all non noise clusters
+
+                if (this.debug) System.out.println(cluster_i_structure.getKey() + "   | " + cluster_i_structure.getValue().loc);
+
                 if (cluster_i_structure.getValue().loc >= 1.0 - this.temp_eps) { //the central condition of condition (2)
                     check_two_clustering.put(cluster_i_structure.getKey(), cluster_i_structure.getValue());
                 }
             }
         }
+
+        if (this.debug) System.out.println("Number of clusters that pass temporal locality epsilon(Check 2): " + n_non_noise_clusters + " (min 2 clusters) ");
 
         if (check_two_clustering.size() < 2) return null; //check (2) not passed
 
@@ -166,11 +175,11 @@ public class EventDector {
         // the cluster with the smaller u, occurs first in time, we name it C1 according to the paper terminology here
         for (Tuple2<Integer, Integer> pair : combinations){
             if(check_two_clustering.get(pair.f0).u < check_two_clustering.get(pair.f1).u){
-              c1 = pair.f0;
-              c2 = pair.f1;
+                c1 = pair.f0;
+                c2 = pair.f1;
             }else {
-              c1 = pair.f1;
-              c2 = pair.f0;
+                c1 = pair.f1;
+                c2 = pair.f0;
             }
 
             /*
@@ -180,11 +189,19 @@ public class EventDector {
             */
             List<Integer> c0_indices = new ArrayList<>();
 
-            if (check_two_clustering.get(c1).v < check_two_clustering.get(c2).u) {
+            if (check_two_clustering.get(c1).v < check_two_clustering.get(c2).u) {// no overlap detected
                 if (this.clusteringStructure.containsKey(-1)) {
                     c0_indices = this.clusteringStructure.get(-1).idxList;
                 } else {
                     return null;
+                }
+
+                if (this.debug) {
+                    System.out.println("No overlap between cluster " + c1 + " and " + c2 );
+                    System.out.println("Potential event window (noise cluster indices:"  + c0_indices);
+                    System.out.println("Cluster 1 v: " + check_two_clustering.get(c1).v);
+                    System.out.println("Cluster 2 u: " + check_two_clustering.get(c2).u);
+
                 }
 
                 List<Integer> event_interval_t = new ArrayList<>();
@@ -195,6 +212,8 @@ public class EventDector {
                     }
                 }
 
+                if(this.debug) System.out.println("Event Interval between " + c1 + " and " + c2 + " with indices " + event_interval_t);
+
                 /*  If the event_interval_t contains no points, we do not add it to the list too,
                 i.e. this combinations does not contain a distinct event interval between the two steady state
                 cluster sections.
@@ -202,14 +221,16 @@ public class EventDector {
                 if (event_interval_t.size() != 0) {
                     checked_clusters.add(new Tuple3<>(c1, c2, event_interval_t));
                 }
-                //else {debug}
             }
         }
+
+        if(this.debug) System.out.println("Passed cluster-pairs: " + checked_clusters.size());
 
         if (checked_clusters.size() < 1) return null;
 
         return checked_clusters;
     }
+
 
     /**
      * @param checkedClusters (stream): of triples (c1, c2, event_interval_t)
