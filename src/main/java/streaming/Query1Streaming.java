@@ -25,12 +25,15 @@ import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 import utils.Config;
 
+import javax.xml.crypto.Data;
+
 public class Query1Streaming {
-    public static void start(DataStream<Feature> features) {
-        features.flatMap(new AddKeyMapper())
+    public static DataStream<DetectedEvent> start(DataStream<Feature> features) {
+        DataStream<DetectedEvent> result = features.flatMap(new AddKeyMapper())
                 .keyBy(e -> e.key)
                 .process(new PredictFunc())
                 .flatMap(new SortFlatMapper());
+        return result;
     }
 
     public static AddKeyMapper newAddKeyMapper() {

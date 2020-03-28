@@ -1,5 +1,6 @@
 package debs;
 
+import entities.DetectedEvent;
 import entities.Feature;
 import entities.KeyedFeature;
 import entities.RawData;
@@ -16,17 +17,16 @@ public class StreamTest {
     @Test
     public void keyedFeatureTest() throws Exception{
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         // start the data generator
         DataStream<RawData> input = env
-                .addSource(new DataSource(120))
+                .addSource(new DataSource())
                 .setParallelism(1);
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
-        DataStream<KeyedFeature> output = features.flatMap(Query1Streaming.newAddKeyMapper());
-        output.print();
-        env.execute("query1 running");
+        DataStream<DetectedEvent> result = Query1Streaming.start(features);
+        result.print();
+        env.execute("Number of busy machines every 5 minutes over the last 15 minutes");
     }
 }
