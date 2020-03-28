@@ -22,7 +22,7 @@ public class DataSource implements SourceFunction<RawData> {
 
     @Override
     public void run(SourceContext<RawData> sourceContext) throws Exception {
-        Query1Client query1 = new Query1Client("localhost","/data/1");
+        Query1Client query1 = new Query1Client("localhost","/data/1/");
         if (this.numRequest == -1){
             while (true){
                 String result = query1.getBatch();

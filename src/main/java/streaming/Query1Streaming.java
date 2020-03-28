@@ -119,8 +119,10 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 
         PredictedEvent e = ed.value().predict(w2.value());
 
-        if (e == null)
+        if (e == null) {
             collector.collect(new DetectedEvent(batchCounter.value() + partitionKey * Config.partion_size, false, -1));
+            return;
+        }
 
         int meanEventIndex = (e.eventStart + e.eventEnd) / 2;
 
