@@ -2,8 +2,10 @@ package entities;
 
 import java.util.*;
 
+import utils.Config;
+
 public class Window2 {
-    private final int MAX_SIZE = 100;
+    private final int MAX_SIZE = Config.w2_size;
     private Deque<KeyedFeature> w2 = new ArrayDeque<KeyedFeature>();
 
     public Window2() {}
