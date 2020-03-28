@@ -36,7 +36,7 @@ def transfer_dict(df_chunk):
 
 
 
-@app.route('/data/1', methods=["GET"])
+@app.route('/data/1/', methods=["GET"])
 def hello_world():
     df_chunk = get_chunk()
     if df_chunk is None:
