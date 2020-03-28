@@ -3,6 +3,7 @@ package utils;
 import entities.Feature;
 import entities.RawData;
 
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.windowing.ProcessAllWindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
@@ -66,5 +67,15 @@ public class Utils {
             Feature point = new Feature(minIdx, p, q);
             collector.collect(point);
         }
+    }
+
+    public static List<Tuple2<Integer, Integer>> combination(List<Integer> list, int pair){
+        List<Tuple2<Integer, Integer>> combination = new ArrayList<>();
+        for (int i = 0; i < list.size()-1; i++){
+            for (int j = i+1; j < list.size(); j++){
+                combination.add(new Tuple2<Integer, Integer>(list.get(i), list.get(j)));
+            }
+        }
+        return null;
     }
 }
