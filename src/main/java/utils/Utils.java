@@ -76,6 +76,6 @@ public class Utils {
                 combination.add(new Tuple2<Integer, Integer>(list.get(i), list.get(j)));
             }
         }
-        return null;
+        return combination;
     }
 }
