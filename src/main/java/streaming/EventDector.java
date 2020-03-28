@@ -57,15 +57,15 @@ public class EventDector {
             this.updateClustering(inputCut);
             checkedClusters = this.checkEventModelConstraints();
             if (checkedClusters == null) {  // roleback with break
-                eventClusterCombinationBalanced = this.rolebackBackwardPass("break", eventClusterCombinationBalanced, i, null);
+                eventClusterCombinationBalanced = this.rollbackBackwardPass("break", eventClusterCombinationBalanced, i, null);
                 break;  // finished
             } else {    // compute the loss
                 Tuple3<Integer, Integer, List<Integer>> eventClusterCombinationBelowLoss = this.computeAndEvaluateLoss(checkedClusters);
                 if (eventClusterCombinationBelowLoss == null) { // roleback with break
-                    eventClusterCombinationBalanced = this.rolebackBackwardPass("break", eventClusterCombinationBalanced, i, null);
+                    eventClusterCombinationBalanced = this.rollbackBackwardPass("break", eventClusterCombinationBalanced, i, null);
                     break;  // finished
                 } else {
-                    eventClusterCombinationBalanced = this.rolebackBackwardPass("continue", eventClusterCombinationBalanced, i, eventClusterCombinationBelowLoss);
+                    eventClusterCombinationBalanced = this.rollbackBackwardPass("continue", eventClusterCombinationBalanced, i, eventClusterCombinationBelowLoss);
                 }
             }
         }
@@ -172,12 +172,38 @@ public class EventDector {
     }
 
     private Tuple3<Integer, Integer, List<Integer>>
-    rolebackBackwardPass(String status, 
+    rollbackBackwardPass(String status,
                         Tuple3<Integer, Integer, List<Integer>> eventClusterCombinationBalanced,
                         int i,
                         Tuple3<Integer, Integer, List<Integer>> eventClusterCombinationBelowLoss) {
         // TO DO
-
+        if (status.equals("break")){
+            List<Integer> ls = new ArrayList<>();
+            for (Integer each: eventClusterCombinationBalanced.f2){
+                ls.add(each + i);
+            }
+            eventClusterCombinationBalanced.setField(ls, 2);
+            for (Map.Entry<Integer, ClusterStructure> each: this.backwardClusteringStructure.entrySet()){
+                int cluster_i = each.getKey();
+                ClusterStructure cluster_i_structure = each.getValue();
+                ls = new ArrayList<>();
+                for (Integer idx: cluster_i_structure.idxList){
+                    ls.add(idx + i - 1);
+                }
+                cluster_i_structure.idxList = ls;
+                cluster_i_structure.u = cluster_i_structure.u + i - 1;
+                cluster_i_structure.v = cluster_i_structure.v + i - 1;
+            }
+            return eventClusterCombinationBalanced;
+        }
+        else if(status.equals("continue")){
+            this.backwardClusteringStructure = clusteringStructure;
+            eventClusterCombinationBalanced = eventClusterCombinationBelowLoss;
+            return eventClusterCombinationBalanced;
+        }
+        else{
+            ;
+        }
         return null;
     }
 
