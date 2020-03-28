@@ -25,8 +25,6 @@ public class EventDector {
     private Map<Integer, ClusterStructure> backwardClusteringStructure;
 
     public EventDector() {
-        this.dbscanEps = 0.05;
-        this.dbscanMinPoints = 2;
     }
 
     public PredictedEvent
@@ -286,7 +284,7 @@ public class EventDector {
 
     private Tuple3<Integer, Integer, Integer> computeErrorNumbers(List<Integer> c1Indices, List<Integer> c2Indices,
                                                                   Integer lowerThresh, Integer upperThresh) {
-        Tuple3<Integer, Integer, Integer> counter = new Tuple3<>();
+        Tuple3<Integer, Integer, Integer> counter = new Tuple3<>(0, 0, 0);
 
         // c2 <= u || u < c2 < v, c2 should >= v
         for (int i = 0; i < c2Indices.size(); i++) {

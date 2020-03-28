@@ -123,7 +123,6 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         if (Config.debug){
             if (feature.idx == 317){
                 System.out.println(">>>> 317 stage");
-                System.out.println(w2.value());
             }
         }
         PredictedEvent e = ed.value().predict(w2.value());
