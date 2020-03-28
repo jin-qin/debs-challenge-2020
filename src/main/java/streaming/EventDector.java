@@ -8,9 +8,11 @@ import entities.Window2;
 
 import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.datastream.DataStream;
 
+import utils.*;
 import java.security.Key;
 import java.util.*;
 
@@ -19,6 +21,7 @@ public class EventDector {
     private double dbscanEps = 0.03;
     private int dbscanMinPoints = 2;
     private int lossThresh = 40;
+    private double temp_eps = 0.8;
 
     private Map<Integer, ClusterStructure> clusteringStructure;
     private Map<Integer, ClusterStructure> forwardClusteringStructure;
@@ -131,86 +134,86 @@ public class EventDector {
      * in the c1 - c2 cluster-combination, that have passed the model
      * checks. The event_interval_t are the indices of the datapoints in between the two clusters.
      */
-    private List<Tuple3<Integer, Integer, List<Integer>>>
-    checkEventModelConstraints() {
-      int n_with_noise_clusters = this.clusteringStructure.size();
-int n_non_noise_clusters =  this.clusteringStructure.containsKey(-1) ? n_with_noise_clusters - 1 : n_with_noise_clusters;
+    private List<Tuple3<Integer, Integer, List<Integer>>> checkEventModelConstraints() {
+        int n_with_noise_clusters = this.clusteringStructure.size();
+        int n_non_noise_clusters =  this.clusteringStructure.containsKey(-1) ? n_with_noise_clusters - 1 : n_with_noise_clusters;
 
-if (n_non_noise_clusters < 2) return null; //check (1) not passed
+        if (n_non_noise_clusters < 2) return null; //check (1) not passed
 
-Map<Integer, ClusterStructure> check_two_clustering = new HashMap(); //store the clusters that pass the test in a new structure
+        Map<Integer, ClusterStructure> check_two_clustering = new HashMap(); //store the clusters that pass the test in a new structure
 
-for (Map.Entry<Integer, ClusterStructure> cluster_i_structure : this.clusteringStructure.entrySet()){
-  if (cluster_i_structure.getKey() != -1) { // for all non noise clusters
-      if (cluster_i_structure.getValue().loc >= 1.0 - this.temp_eps) { //the central condition of condition (2)
-          check_two_clustering.put(cluster_i_structure.getKey(), cluster_i_structure.getValue());
-      }
-  }
-}
+        for (Map.Entry<Integer, ClusterStructure> cluster_i_structure : this.clusteringStructure.entrySet()){
+            if (cluster_i_structure.getKey() != -1) { // for all non noise clusters
+                if (cluster_i_structure.getValue().loc >= 1.0 - this.temp_eps) { //the central condition of condition (2)
+                    check_two_clustering.put(cluster_i_structure.getKey(), cluster_i_structure.getValue());
+                }
+            }
+        }
 
-if (check_two_clustering.size() < 2) return null; //check (2) not passed
+        if (check_two_clustering.size() < 2) return null; //check (2) not passed
 
-/*
-# Two clusters C1 and C2 do not interleave in the time domain.
-# There is a point s in C1 for which all points n > s do not belong to C1 anymore.
-# There is also a point i in C2 for which all points n < i do not belong to C2 anymore.
-# i.e. the maximum index s of C1 has to be smaller then the minimum index of C2
-*/
-List<Tuple3<Integer, Integer, List<Integer>>> checked_clusters = new ArrayList<>();
+        /*
+        # Two clusters C1 and C2 do not interleave in the time domain.
+        # There is a point s in C1 for which all points n > s do not belong to C1 anymore.
+        # There is also a point i in C2 for which all points n < i do not belong to C2 anymore.
+        # i.e. the maximum index s of C1 has to be smaller then the minimum index of C2
+        */
+        List<Tuple3<Integer, Integer, List<Integer>>> checked_clusters = new ArrayList<>();
 
-//We need to compare all pairs of clusters in order to find all pairs that fullfill condition (3)
+        //We need to compare all pairs of clusters in order to find all pairs that fullfill condition (3)
 
-List<Integer> keylist = new ArrayList<>();
-for(Map.Entry<Integer, ClusterStructure> entry : check_two_clustering.entrySet()){ keylist.add(entry.getKey()); }
+        List<Integer> keylist = new ArrayList<>();
+        for(Map.Entry<Integer, ClusterStructure> entry : check_two_clustering.entrySet()){ keylist.add(entry.getKey()); }
 
-List<Tuple2<Integer, Integer>> combinations = Utils.combination(keylist, 2);
+        List<Tuple2<Integer, Integer>> combinations = Utils.combination(keylist, 2);
 
-int c1, c2;
-// the cluster with the smaller u, occurs first in time, we name it C1 according to the paper terminology here
-for (Tuple2<Integer, Integer> pair : combinations){
-  if(check_two_clustering.get(pair.f0).u < check_two_clustering.get(pair.f1).u){
-      c1 = pair.f0;
-      c2 = pair.f1;
-  }else {
-      c1 = pair.f1;
-      c2 = pair.f0;
-  }
+        int c1, c2;
+        // the cluster with the smaller u, occurs first in time, we name it C1 according to the paper terminology here
+        for (Tuple2<Integer, Integer> pair : combinations){
+            if(check_two_clustering.get(pair.f0).u < check_two_clustering.get(pair.f1).u){
+              c1 = pair.f0;
+              c2 = pair.f1;
+            }else {
+              c1 = pair.f1;
+              c2 = pair.f0;
+            }
 
-  /*
-   now we check if they are overlapping
-   the maximum index of C1 has to be smaller then the minimum index of C2, then no point of C2 is in C1
-   and the other way round, i.e all points in C1 have to be smaller then u of C2
-   */
-  List<Integer> c0_indices = new ArrayList<>();
+            /*
+            now we check if they are overlapping
+            the maximum index of C1 has to be smaller then the minimum index of C2, then no point of C2 is in C1
+            and the other way round, i.e all points in C1 have to be smaller then u of C2
+            */
+            List<Integer> c0_indices = new ArrayList<>();
 
-  if (check_two_clustering.get(c1).v < check_two_clustering.get(c2).u) {
-      if (this.clusteringStructure.containsKey(-1)) {
-          c0_indices = this.clusteringStructure.get(-1).idxList;
-      } else {
-          return null;
-      }
-      List<Integer> event_interval_t = new ArrayList<>();
-      //check the condition, no overlap between the noise and steady state clusters allowed: u is lower, v upper bound
-      for (int idx : c0_indices) {
-          if ((idx > check_two_clustering.get(c1).v) && (idx < check_two_clustering.get(c2).u)){
-              event_interval_t.add(idx);
-          }
-      }
+            if (check_two_clustering.get(c1).v < check_two_clustering.get(c2).u) {
+                if (this.clusteringStructure.containsKey(-1)) {
+                    c0_indices = this.clusteringStructure.get(-1).idxList;
+                } else {
+                    return null;
+                }
 
-      /*  If the event_interval_t contains no points, we do not add it to the list too,
-      i.e. this combinations does not contain a distinct event interval between the two steady state
-      cluster sections.
-      */
-      if (event_interval_t.size() != 0) {
-          checked_clusters.add(new Tuple3<>(c1, c2, event_interval_t));
-      }
-//              else {debug}
-  }
-}
+                List<Integer> event_interval_t = new ArrayList<>();
+                //check the condition, no overlap between the noise and steady state clusters allowed: u is lower, v upper bound
+                for (int idx : c0_indices) {
+                    if ((idx > check_two_clustering.get(c1).v) && (idx < check_two_clustering.get(c2).u)){
+                        event_interval_t.add(idx);
+                    }
+                }
 
-      if (checked_clusters.size() < 1) return null;
+                /*  If the event_interval_t contains no points, we do not add it to the list too,
+                i.e. this combinations does not contain a distinct event interval between the two steady state
+                cluster sections.
+                */
+                if (event_interval_t.size() != 0) {
+                    checked_clusters.add(new Tuple3<>(c1, c2, event_interval_t));
+                }
+                //else {debug}
+            }
+        }
 
-      return checked_clusters;
+        if (checked_clusters.size() < 1) return null;
+
+        return checked_clusters;
     }
 
     /**
