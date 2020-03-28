@@ -25,7 +25,7 @@ public class StreamTest {
                 .setParallelism(1);
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
-        DataStream<KeyedFeature> output = features.flatMap(new Query1Streaming.AddKeyMapper());
+        DataStream<KeyedFeature> output = features.flatMap(Query1Streaming.newAddKeyMapper());
         output.print();
         env.execute("query1 running");
     }

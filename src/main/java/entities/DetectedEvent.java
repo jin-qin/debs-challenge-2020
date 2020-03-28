@@ -1,16 +1,18 @@
 package entities;
 
 public class DetectedEvent {
-    private long eventStart;
-    private long eventEnd;
+    private int windowStart;
+    private boolean eventDetected;
+    private int eventIndMean;
 
-    public DetectedEvent(long s, long e) {
-        this.eventStart = s;
-        this.eventEnd = e;
+    public DetectedEvent(int s, boolean d, int event_s) {
+        this.windowStart = s;
+        this.eventDetected = d;
+        this.eventIndMean = event_s;
     }
 
     @Override
     public String toString() {
-        return String.format("DetectedEvent{eventStart:%d, eventEnd:%d}", eventStart, eventEnd);
+        return String.format("DetectedEvent{windowStart:%d, eventDetected:%b, eventIndMean:%d}", windowStart, eventDetected, eventIndMean);
     }
 }

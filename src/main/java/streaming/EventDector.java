@@ -52,7 +52,7 @@ public class EventDector {
         Tuple3<Integer, Integer, List<Integer>> eventClusterCombinationBalanced = eventClusterCombination;
         
         for (int i = 1; i < input.size() - 1; i++) {
-            List<KeyedFeature> inputCut = input.subList(i, input.size() - 1);
+            List<KeyedFeature> inputCut = input.subList(i, input.size());
 
             this.updateClustering(inputCut);
             checkedClusters = this.checkEventModelConstraints();

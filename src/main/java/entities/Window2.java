@@ -24,6 +24,15 @@ public class Window2 {
         return w2.size();
     }
 
+    public void setW2(List<KeyedFeature> features) {
+        w2.clear();
+        w2.addAll(features);
+    } 
+
+    public List<KeyedFeature> subWindow(int start, int end) {
+        return getElements().subList(start, end);
+    }
+
     public List<KeyedFeature> getElements() {
         List<KeyedFeature> ls = new ArrayList<>();
         Iterator<KeyedFeature> it = w2.iterator();

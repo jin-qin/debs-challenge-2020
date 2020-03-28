@@ -1,10 +1,10 @@
 package entities;
 
 public class PredictedEvent {
-    public long eventStart;
-    public long eventEnd;
+    public int eventStart;
+    public int eventEnd;
 
-    public PredictedEvent(long e_start, long e_end) {
+    public PredictedEvent(int e_start, int e_end) {
         this.eventStart = e_start;
         this.eventEnd = e_end;
     }

@@ -34,9 +34,7 @@ public class Main {
                 .setParallelism(1);
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
-        features.flatMap(new Query1Streaming.AddKeyMapper())
-                .keyBy(e -> e.key)
-                .flatMap(new Query1Streaming.PredictMapper());
+        Query1Streaming.start(features);
         env.execute("Number of busy machines every 5 minutes over the last 15 minutes");
 
     }
