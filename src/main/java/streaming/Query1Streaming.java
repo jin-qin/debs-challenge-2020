@@ -13,29 +13,22 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
-import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 import utils.Config;
-
-import javax.xml.crypto.Data;
 
 public class Query1Streaming {
     public static DataStream<DetectedEvent> start(DataStream<Feature> features) {
         DataStream<DetectedEvent> result = features.flatMap(new AddKeyMapper())
                 .keyBy(e -> e.key)
                 .process(new PredictFunc())
-                .flatMap(new SortFlatMapper())
-                .setParallelism(1);
+                .flatMap(new SortFlatMapper());
         return result;
     }
 
@@ -54,7 +47,7 @@ class AddKeyMapper implements FlatMapFunction<Feature, KeyedFeature> {
         KeyedFeature keyed = new KeyedFeature(partionIdx, offset, value.idx, value.f1, value.f2);
         out.collect(keyed);
         if (offset < Config.w2_size && partionIdx != 0) {
-            KeyedFeature keyedAdd = new KeyedFeature(partionIdx - 1, offset, value.idx, value.f1, value.f2);
+            KeyedFeature keyedAdd = new KeyedFeature(partionIdx - 1, Config.partion_size + offset, value.idx, value.f1, value.f2);
             out.collect(keyedAdd);
         }
     }
@@ -121,8 +114,10 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         w2.update(w2_v);
 
         PredictedEvent e = ed.value().predict(w2.value());
-
+        // System.out.println(String.format("> 0: key:%d, counter: %d, offset: %d", feature.key, batchCounter_v, feature.offset));
         if (e == null) {
+            if (feature.key > 0 && feature.offset < Config.w2_size) return;
+            // System.out.println(String.format("> 1: key:%d, counter: %d", feature.key, batchCounter_v));
             collector.collect(new DetectedEvent(batchCounter_v + partitionKey * Config.partion_size, false, -1));
             return;
         }
@@ -136,6 +131,8 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         windowStartIndex.update(windowStartIndex.value() + e.eventEnd);
         currentWindowStart.update(windowStartIndex.value());
 
+        if (feature.key > 0 && feature.offset < Config.w2_size) return;
+        // System.out.println(String.format("> 1: key:%d, counter: %d", feature.key, batchCounter_v));
         collector.collect(new DetectedEvent(batchCounter.value() + partitionKey * Config.partion_size, true, currentWindowStart.value() + meanEventIndex));
     }
 }
@@ -144,18 +141,14 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 class SortFlatMapper implements FlatMapFunction<DetectedEvent, DetectedEvent>{
     private static final long serialVersionUID = 5840447412541874914L;
 
-    private PriorityQueue<DetectedEvent> pqueue = new PriorityQueue<>(new DetectedEventComparator());
-    long nextIdx = 0;
+    private static PriorityQueue<DetectedEvent> pqueue = new PriorityQueue<>(new DetectedEventComparator());
+    private static long nextIdx = 0;
 
     @Override
     public void flatMap(DetectedEvent detectedEvent, Collector<DetectedEvent> collector) throws Exception {
         pqueue.add(detectedEvent);
-        System.out.println("> 1: " + detectedEvent + ", size: " + pqueue.size());
-        while(pqueue.size() > 0 && pqueue.peek().getWindowStart() == nextIdx){
+        while(pqueue.size() > 0 && pqueue.peek().getBatchCounter() == nextIdx){
             DetectedEvent e = pqueue.poll();
-
-            System.out.println("> 2: " + e + ", size: " + pqueue.size());
-
             collector.collect(e);
             nextIdx++;
         }
@@ -169,8 +162,8 @@ class DetectedEventComparator implements Comparator<DetectedEvent>, Serializable
 
     public int compare(DetectedEvent e1, DetectedEvent e2) 
     {
-        long v1 = e1.getWindowStart();
-        long v2 = e2.getWindowStart();
+        long v1 = e1.getBatchCounter();
+        long v2 = e2.getBatchCounter();
         if (v1 < v2) return 1;
         if (v1 == v2) return 0;
         return -1;

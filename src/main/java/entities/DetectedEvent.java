@@ -1,22 +1,22 @@
 package entities;
 
 public class DetectedEvent {
-    private long windowStart;
+    private long batchCounter;
     private boolean eventDetected;
     private long eventIndMean;
 
     public DetectedEvent(long s, boolean d, long event_s) {
-        this.windowStart = s;
+        this.batchCounter = s;
         this.eventDetected = d;
         this.eventIndMean = event_s;
     }
 
-    public long getWindowStart() {
-        return windowStart;
+    public long getBatchCounter() {
+        return batchCounter;
     }
 
-    public void setWindowStart(long windowStart) {
-        this.windowStart = windowStart;
+    public void setBatchCounter(long batchCounter) {
+        this.batchCounter = batchCounter;
     }
 
     public boolean isEventDetected() {
@@ -37,10 +37,10 @@ public class DetectedEvent {
 
     @Override
     public String toString() {
-        return String.format("DetectedEvent{windowStart:%d, eventDetected:%b, eventIndMean:%d}", windowStart, eventDetected, eventIndMean);
+        return String.format("DetectedEvent{batchCounter:%d, eventDetected:%b, eventIndMean:%d}", batchCounter, eventDetected, eventIndMean);
     }
 
     public String toJson() {
-        return String.format("{'s':%d, 'd':%b, 'event_s':%d}", windowStart, eventDetected, eventIndMean);
+        return String.format("{'s':%d, 'd':%b, 'event_s':%d}", batchCounter, eventDetected, eventIndMean);
     }
 }
