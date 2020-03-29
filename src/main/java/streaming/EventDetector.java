@@ -16,7 +16,7 @@ import java.util.*;
 public class EventDetector {
 
     private double dbscanEps = 0.03;
-    private int dbscanMinPoints = 2;
+    private int dbscanMinPoints = 1;
     private int lossThresh = 40;
     private double temp_eps = 0.8;
     private boolean debug = false;
@@ -118,7 +118,7 @@ public class EventDetector {
             v = idx>v?idx:v;
             u = idx<u?idx:u;
         }
-        double loc = ls.size()/(v-u+1);
+        double loc = ls.size()/(v-u+1.0);
         ClusterStructure clusterStructure = new ClusterStructure(idxLs, u, v, loc);
         return clusterStructure;
     }
