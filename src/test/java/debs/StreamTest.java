@@ -2,8 +2,8 @@ package debs;
 
 import entities.DetectedEvent;
 import entities.Feature;
-import entities.KeyedFeature;
 import entities.RawData;
+
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -28,11 +28,6 @@ public class StreamTest {
         DataStream<DetectedEvent> result = Query1Streaming.start(features);
         result.print();
         env.execute("Number of busy machines every 5 minutes over the last 15 minutes");
-    }
-
-    @Test
-    public void computeAndEvaluateLossTest() throws Exception {
-
     }
 
     @Test

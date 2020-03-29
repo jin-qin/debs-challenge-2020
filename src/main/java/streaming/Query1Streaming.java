@@ -58,7 +58,7 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
     private static final long serialVersionUID = -5973216181346355124L;
 
     private ValueState<Window2> w2;
-    private ValueState<EventDector> ed;
+    private ValueState<EventDetector> ed;
 
     private ValueState<Long> windowStartIndex;
     private ValueState<Long> currentWindowStart;
@@ -73,11 +73,11 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
                         TypeInformation.of(new TypeHint<Window2>() {})); // type information
         w2 = getRuntimeContext().getState(descriptorW2);
 
-        ValueStateDescriptor<EventDector> descriptorEventDector =
+        ValueStateDescriptor<EventDetector> descriptorEventDetector =
                 new ValueStateDescriptor<>(
-                        "EventDector", // the state name
-                        TypeInformation.of(new TypeHint<EventDector>() {})); // type information
-        ed = getRuntimeContext().getState(descriptorEventDector);
+                        "EventDetector", // the state name
+                        TypeInformation.of(new TypeHint<EventDetector>() {})); // type information
+        ed = getRuntimeContext().getState(descriptorEventDetector);
 
         ValueStateDescriptor<Long> descriptorWindowStartIndex =
                 new ValueStateDescriptor<>(
@@ -102,7 +102,7 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
     @Override
     public void processElement(KeyedFeature feature, Context context, Collector<DetectedEvent> collector) throws Exception {
         if (w2.value() == null) w2.update(new Window2());
-        if (ed.value() == null) ed.update(new EventDector());
+        if (ed.value() == null) ed.update(new EventDetector());
         if (windowStartIndex.value() == null) windowStartIndex.update(feature.idx + 1); // why 1?
         if (currentWindowStart.value() == null) currentWindowStart.update(feature.idx + 1); // why 1?
 
@@ -117,10 +117,6 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         mapTsFeature.remove(timestamp);
 
         Window2 w2_v = w2.value();
-        // if (w2_v.size() <= 0) {
-        //     windowStartIndex.update(feature.idx + 1);
-        //     currentWindowStart.update(feature.idx + 1);
-        // }
         w2_v.addElement(feature);
         w2.update(w2_v);
 
@@ -134,7 +130,6 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 
         if (e == null) {
             if (w2_v.size() > Config.w2_size) {
-                // w2_v.clear();
                 w2_v.removeFirst();
                 w2.update(w2_v);
 

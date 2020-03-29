@@ -13,7 +13,7 @@ import org.apache.flink.api.java.tuple.Tuple3;
 import utils.*;
 import java.util.*;
 
-public class EventDector {
+public class EventDetector {
 
     private double dbscanEps = 0.03;
     private int dbscanMinPoints = 2;
@@ -25,7 +25,7 @@ public class EventDector {
     private Map<Integer, ClusterStructure> forwardClusteringStructure;
     private Map<Integer, ClusterStructure> backwardClusteringStructure;
 
-    public EventDector() {
+    public EventDetector() {
     }
 
     public PredictedEvent
@@ -236,7 +236,7 @@ public class EventDector {
      * @param checkedClusters (stream): of triples (c1, c2, event_interval_t)
      * @return eventClusterCombination (stream): the winning of triples (c1, c2, event_interval_t)
      */
-    private Tuple3<Integer, Integer, List<Integer>>
+    public Tuple3<Integer, Integer, List<Integer>>
     computeAndEvaluateLoss(List<Tuple3<Integer, Integer, List<Integer>>> checkedClusters) {
         List<Integer> eventModelLossList = new ArrayList<>();
         int minLossIndex = -1;
@@ -267,7 +267,7 @@ public class EventDector {
         return null;
     }
 
-    private Tuple3<Integer, Integer, List<Integer>>
+    public Tuple3<Integer, Integer, List<Integer>>
     rollbackBackwardPass(String status,
                         Tuple3<Integer, Integer, List<Integer>> eventClusterCombinationBalanced,
                         int i,
