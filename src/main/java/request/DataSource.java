@@ -25,6 +25,9 @@ public class DataSource implements SourceFunction<RawData> {
         if (this.numRequest == -1){
             while (true){
                 String result = query1.getBatch();
+                if (result == null){
+                    break;
+                }
                 List<RawData> ls = Utils.parseJson(result);
                 for (RawData each: ls){
                     sourceContext.collectWithTimestamp(each, each.i);
@@ -34,6 +37,9 @@ public class DataSource implements SourceFunction<RawData> {
             long requestCount = 0;
             while (requestCount < numRequest){
                 String result = query1.getBatch();
+                if (result == null){
+                    break;
+                }
                 List<RawData> ls = Utils.parseJson(result);
                 for (RawData each: ls){
                     sourceContext.collectWithTimestamp(each, each.i);
