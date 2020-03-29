@@ -103,8 +103,6 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
     public void processElement(KeyedFeature feature, Context context, Collector<DetectedEvent> collector) throws Exception {
         if (w2.value() == null) w2.update(new Window2());
         if (ed.value() == null) ed.update(new EventDetector());
-        if (windowStartIndex.value() == null) windowStartIndex.update(feature.idx + 1); // why 1?
-        if (currentWindowStart.value() == null) currentWindowStart.update(feature.idx + 1); // why 1?
 
         long ts = context.timestamp();
         mapTsFeature.put(ts, feature);
@@ -116,6 +114,9 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         KeyedFeature feature = mapTsFeature.get(timestamp);
         mapTsFeature.remove(timestamp);
 
+        if (windowStartIndex.value() == null) windowStartIndex.update(feature.offset);
+        if (currentWindowStart.value() == null) currentWindowStart.update(feature.offset);
+
         Window2 w2_v = w2.value();
         w2_v.addElement(feature);
         w2.update(w2_v);
@@ -123,7 +124,6 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         if (Config.debug) {
             if (feature.idx == 352) {
                 System.out.println(">>>> 352 stage");
-                System.out.println(w2.value());
             }
         }
         
@@ -151,12 +151,12 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         w2.update(w2_v);
 
         windowStartIndex.update(windowStartIndex.value() + e.eventEnd);
-        Long tmpCurrentWindowStart = currentWindowStart.value();
+        Long globalCurrentWindowStart = feature.key * Config.partion_size + currentWindowStart.value();
         currentWindowStart.update(windowStartIndex.value());
 
         if (feature.key > 0 && feature.offset < Config.w2_size) return;
 
-        out.collect(new DetectedEvent(feature.idx, true, tmpCurrentWindowStart + meanEventIndex));
+        out.collect(new DetectedEvent(feature.idx, true, globalCurrentWindowStart + meanEventIndex));
     }
 }
 
