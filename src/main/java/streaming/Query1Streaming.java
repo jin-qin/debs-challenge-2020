@@ -22,6 +22,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
+import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 import utils.Config;
 
@@ -29,7 +30,10 @@ public class Query1Streaming {
     public static DataStream<DetectedEvent> start(DataStream<Feature> features) {
         DataStream<DetectedEvent> result = features.flatMap(new AddKeyMapper())
                 .keyBy(e -> e.key)
-                .process(new PredictFunc());
+                .process(new PredictFunc())
+                .keyBy(e -> e.isEventDetected())
+                .process(new SortFunc())
+                .setParallelism(1);
         return result;
     }
 
@@ -160,11 +164,40 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
     }
 }
 
+class SortFunc extends KeyedProcessFunction<Boolean, DetectedEvent, DetectedEvent> {
+    private static final long serialVersionUID = -3260627464897625644L;
+
+    private MapState<Long, DetectedEvent> mapTsEvent;
+
+    @Override
+    public void open(Configuration config) throws IOException {
+        MapStateDescriptor<Long, DetectedEvent> descriptorMapTsEvent = 
+                new MapStateDescriptor<Long, DetectedEvent>(
+                    "MapTsEvent", 
+                    Long.TYPE, 
+                    DetectedEvent.class);
+        mapTsEvent = getRuntimeContext().getMapState(descriptorMapTsEvent);
+    }
+
+    @Override
+    public void processElement(DetectedEvent value, Context ctx, Collector<DetectedEvent> out) throws Exception {
+        mapTsEvent.put(ctx.timestamp(), value);
+        ctx.timerService().registerEventTimeTimer(ctx.timestamp());
+    }
+
+    @Override
+    public void onTimer(long timestamp, OnTimerContext ctx, Collector<DetectedEvent> out) throws Exception {
+        out.collect(mapTsEvent.get(timestamp));
+        mapTsEvent.remove(timestamp);
+    }
+}
+
+
 class SortFlatMapper implements FlatMapFunction<DetectedEvent, DetectedEvent>{
     private static final long serialVersionUID = 5840447412541874914L;
 
-    private static PriorityQueue<DetectedEvent> pqueue = new PriorityQueue<>(new DetectedEventComparator());
-    private static long nextIdx = 0;
+    private PriorityQueue<DetectedEvent> pqueue = new PriorityQueue<>(new DetectedEventComparator());
+    private long nextIdx = 0;
 
     @Override
     public void flatMap(DetectedEvent detectedEvent, Collector<DetectedEvent> collector) throws Exception {

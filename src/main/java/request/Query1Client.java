@@ -28,7 +28,7 @@ public class Query1Client {
         this.endpoint = endpoint;
     }
 
-    private void close() throws IOException {
+    public void close() throws IOException {
         httpClient.close();
     }
 
