@@ -17,12 +17,13 @@ public class Main {
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
-        // env.setParallelism(2);
+        env.setParallelism(4);
 
         // start the data generator
         DataStream<RawData> input = env
                 .addSource(new DataSource(500))
                 .setParallelism(1);
+
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
         DataStream<DetectedEvent> result = Query1Streaming.start(features);

@@ -40,7 +40,7 @@ def transfer_dict(df_chunk):
 def hello_world():
     df_chunk = get_chunk()
     if df_chunk is None:
-        return jsonify({"records": []})
+        return jsonify({"records": []}), 403
     else:
         return jsonify({"records": transfer_dict(df_chunk)})
 
