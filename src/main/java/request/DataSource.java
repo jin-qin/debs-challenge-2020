@@ -29,6 +29,9 @@ public class DataSource implements SourceFunction<RawData> {
                     break;
                 }
                 List<RawData> ls = Utils.parseJson(result);
+                if (ls.size() == 0){
+                    break;
+                }
                 for (RawData each: ls){
                     sourceContext.collectWithTimestamp(each, each.i);
                 }
@@ -41,6 +44,9 @@ public class DataSource implements SourceFunction<RawData> {
                     break;
                 }
                 List<RawData> ls = Utils.parseJson(result);
+                if (ls.size() == 0){
+                    break;
+                }
                 for (RawData each: ls){
                     synchronized (sourceContext.getCheckpointLock()) {
                         sourceContext.collectWithTimestamp(each, each.i);

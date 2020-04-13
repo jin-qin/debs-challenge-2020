@@ -184,6 +184,10 @@ class VerifyFunc extends ProcessFunction<DetectedEvent, DetectedEvent> {
                 currentWindowStart += this.INTERVAL;
             }
             List<KeyedFeature> features = buffered.subWindow((int)currentWindowStart, (int)(currentWindowStart + this.INTERVAL));
+            for (KeyedFeature feature: features){
+                //
+            }
+
         }
         if (evt.isEventDetected()){
             long nxtId = evt.getEventEnd() + this.INTERVAL;

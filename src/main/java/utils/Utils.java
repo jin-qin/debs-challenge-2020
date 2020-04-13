@@ -22,6 +22,9 @@ public class Utils {
         List<RawData> ls = new ArrayList<>();
         try {
             JSONObject obj = (JSONObject) new JSONParser().parse(str);
+            if (obj.get("records").toString().equals("")){
+                return ls;
+            }
             JSONArray records = (JSONArray) obj.get("records");
             for (Object each: records){
                 JSONObject jobj = (JSONObject)each;
