@@ -126,8 +126,9 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         w2.update(w2_v);
 
         if (Config.debug) {
-            if (feature.idx == 352) {
-                System.out.println(">>>> 352 stage");
+            if (feature.idx == 935) {
+                System.out.println(">>>> 935 stage");
+                System.out.println(w2.value());
             }
         }
         

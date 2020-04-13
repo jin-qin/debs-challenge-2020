@@ -23,7 +23,6 @@ public class Main {
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
-
         // start the data generator
         DataStream<RawData> input = env
                 .addSource(new DataSource(1000))
