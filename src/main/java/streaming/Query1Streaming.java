@@ -1,14 +1,12 @@
 package streaming;
 
-import entities.DetectedEvent;
-import entities.Feature;
-import entities.KeyedFeature;
-import entities.PredictedEvent;
-import entities.Window2;
+import entities.*;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.security.Key;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -34,6 +32,8 @@ public class Query1Streaming {
                 .keyBy(e -> e.isEventDetected())
                 .process(new SortFunc())
                 .setParallelism(1);
+//                .process(new VerifyFunc())
+//                .setParallelism(1);
         return result;
     }
 
@@ -145,7 +145,7 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 
             if (feature.key > 0 && feature.offset < Config.w2_size) return;
 
-            out.collect(new DetectedEvent(feature.idx, false, -1));
+            out.collect(new DetectedEventToVerify(feature.idx, false, -1, feature, -1, -1));
             return;
         }
 
@@ -161,7 +161,35 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 
         if (feature.key > 0 && feature.offset < Config.w2_size) return;
 
-        out.collect(new DetectedEvent(feature.idx, true, globalCurrentWindowStart + meanEventIndex));
+        out.collect(new DetectedEventToVerify(feature.idx, true, globalCurrentWindowStart + meanEventIndex, feature, globalCurrentWindowStart + e.eventStart, globalCurrentWindowStart + e.eventEnd));
+    }
+}
+
+class VerifyFunc extends ProcessFunction<DetectedEvent, DetectedEvent> {
+    private static final long serialVersionUID = -3260627464897649644L;
+
+    private HashMap<Long, DetectedEventToVerify> detecedEvents = new HashMap<>();
+    private VerifyQueue buffered = new VerifyQueue();
+    private long currentWindowStart = 0;
+    private long INTERVAL = Config.w2_size + 1;
+
+    @Override
+    public void processElement(DetectedEvent value, Context ctx, Collector<DetectedEvent> out) throws Exception {
+        System.out.println(value);
+        DetectedEventToVerify evt = (DetectedEventToVerify) value;
+        buffered.addElement(evt.getFeature());
+        if (detecedEvents.keySet().contains(evt.getFeature().idx)){
+            DetectedEventToVerify detectedEvt = detecedEvents.get(evt.getFeature().idx);
+            while (!(detectedEvt.getEventStart() >= currentWindowStart && detectedEvt.getEventEnd() < currentWindowStart + this.INTERVAL)){
+                currentWindowStart += this.INTERVAL;
+            }
+            List<KeyedFeature> features = buffered.subWindow((int)currentWindowStart, (int)(currentWindowStart + this.INTERVAL));
+        }
+        if (evt.isEventDetected()){
+            long nxtId = evt.getEventEnd() + this.INTERVAL;
+            this.detecedEvents.put(nxtId, evt);
+        }
+        out.collect(value);
     }
 }
 
