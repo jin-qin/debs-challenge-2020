@@ -4,7 +4,7 @@ import pandas as pd
 import json
 app = Flask(__name__)
 
-df_raw = pd.read_csv("./dataset/in1.csv", header=None)
+df_raw = pd.read_csv("/home/runqi/Workspace/Spring2020/CS591K1/challenge/dataset2/in1.csv", header=None)
 
 current_idx = 0
 chunk_size=1000

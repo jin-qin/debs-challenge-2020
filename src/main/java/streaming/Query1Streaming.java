@@ -17,6 +17,7 @@ import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
@@ -136,7 +137,8 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 
         if (e == null) {
             if (w2_v.size() > Config.w2_size) {
-                w2_v.removeFirst();
+//                w2_v.removeFirst();
+                w2_v.clear();
                 w2.update(w2_v);
 
                 windowStartIndex.update(windowStartIndex.value() + 1);
@@ -199,11 +201,13 @@ class VerifyFunc extends ProcessFunction<DetectedEvent, DetectedEvent> {
             }
             List<KeyedFeature> features = buffered.subWindow((int)currentWindowStart, (int)(currentWindowStart + this.INTERVAL));
             Query1Dectector q1d = new Query1Dectector(features);
-            DetectedEvent result = q1d.dectedEvent();
+            Tuple2<DetectedEvent, Long> result = q1d.dectedEvent();
             out.collect(new DetectedEvent(detectedEvt.getBatchCounter(), false, -1));
             if (result != null){
-                out.collect(result);
+                out.collect(result.f0);
+                currentWindowStart = result.f1;
             }
+
         }
     }
 }

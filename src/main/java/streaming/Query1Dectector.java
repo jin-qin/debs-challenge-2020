@@ -1,6 +1,7 @@
 package streaming;
 
 import entities.*;
+import org.apache.flink.api.java.tuple.Tuple2;
 import utils.Config;
 
 import java.util.HashMap;
@@ -21,7 +22,7 @@ public class Query1Dectector {
         this.features = features;
     }
 
-    public DetectedEvent dectedEvent(){
+    public Tuple2<DetectedEvent, Long> dectedEvent(){
         for (KeyedFeature feature: features){
             if (windowStartIndex== -1) windowStartIndex = feature.offset;
             if (currentWindowStart == -1) currentWindowStart = feature.offset;
@@ -31,12 +32,12 @@ public class Query1Dectector {
             PredictedEvent e = ed.predict(w2);
 
             if (e == null) {
-                if (w2.size() > Config.w2_size) {
-                    w2.removeFirst();
-
-                    windowStartIndex += 1;
-                    currentWindowStart += 1;
-                }
+//                if (w2.size() > Config.w2_size) {
+//                    w2.removeFirst();
+//
+//                    windowStartIndex += 1;
+//                    currentWindowStart += 1;
+//                }
                 continue;
             }
 
@@ -50,7 +51,7 @@ public class Query1Dectector {
             Long globalCurrentWindowStart = feature.key * Config.partion_size + currentWindowStart;
             currentWindowStart = windowStartIndex;
 
-            return new DetectedEvent(feature.idx, true, globalCurrentWindowStart + meanEventIndex + 1);
+            return new Tuple2(new DetectedEvent(feature.idx, true, globalCurrentWindowStart + meanEventIndex + 1), globalCurrentWindowStart + e.eventEnd);
         }
         return null;
     }
