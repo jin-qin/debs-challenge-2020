@@ -31,9 +31,9 @@ public class Query1Streaming {
                 .process(new PredictFunc())
                 .keyBy(e -> e.isEventDetected())
                 .process(new SortFunc())
+                .setParallelism(1)
+                .process(new VerifyFunc())
                 .setParallelism(1);
-//                .process(new VerifyFunc())
-//                .setParallelism(1);
         return result;
     }
 
@@ -140,7 +140,7 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
                 w2.update(w2_v);
 
                 windowStartIndex.update(windowStartIndex.value() + 1);
-                currentWindowStart.update(windowStartIndex.value() + 1);
+                currentWindowStart.update(currentWindowStart.value() + 1);
             }
 
             if (feature.key > 0 && feature.offset < Config.w2_size) return;
@@ -150,6 +150,8 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         }
 
         int meanEventIndex = (e.eventStart + e.eventEnd) / 2;
+//        System.out.println(w2.value().getElements().get(e.eventStart));
+//        System.out.println(w2.value().getElements().get(e.eventEnd));
 
         List<KeyedFeature> subWindow = w2.value().subWindow(e.eventEnd, w2.value().size());
         w2_v.setW2(subWindow);
@@ -161,7 +163,7 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 
         if (feature.key > 0 && feature.offset < Config.w2_size) return;
 
-        out.collect(new DetectedEventToVerify(feature.idx, true, globalCurrentWindowStart + meanEventIndex, feature, globalCurrentWindowStart + e.eventStart, globalCurrentWindowStart + e.eventEnd));
+        out.collect(new DetectedEventToVerify(feature.idx, true, globalCurrentWindowStart + meanEventIndex + 1, feature, globalCurrentWindowStart + e.eventStart, globalCurrentWindowStart + e.eventEnd));
     }
 }
 
@@ -173,27 +175,36 @@ class VerifyFunc extends ProcessFunction<DetectedEvent, DetectedEvent> {
     private long currentWindowStart = 0;
     private long INTERVAL = Config.w2_size + 1;
 
+
+    public void predictEvent(){
+
+    }
+
     @Override
     public void processElement(DetectedEvent value, Context ctx, Collector<DetectedEvent> out) throws Exception {
-        System.out.println(value);
         DetectedEventToVerify evt = (DetectedEventToVerify) value;
         buffered.addElement(evt.getFeature());
+        // like ontimer
+        if (evt.isEventDetected()){
+            long nxtId = evt.getEventEnd() + this.INTERVAL;
+            this.detecedEvents.put(nxtId, evt);
+        }
+        out.collect(value);
+
+        // ontimer
         if (detecedEvents.keySet().contains(evt.getFeature().idx)){
             DetectedEventToVerify detectedEvt = detecedEvents.get(evt.getFeature().idx);
             while (!(detectedEvt.getEventStart() >= currentWindowStart && detectedEvt.getEventEnd() < currentWindowStart + this.INTERVAL)){
                 currentWindowStart += this.INTERVAL;
             }
             List<KeyedFeature> features = buffered.subWindow((int)currentWindowStart, (int)(currentWindowStart + this.INTERVAL));
-            for (KeyedFeature feature: features){
-                //
+            Query1Dectector q1d = new Query1Dectector(features);
+            DetectedEvent result = q1d.dectedEvent();
+            out.collect(new DetectedEvent(detectedEvt.getBatchCounter(), false, -1));
+            if (result != null){
+                out.collect(result);
             }
-
         }
-        if (evt.isEventDetected()){
-            long nxtId = evt.getEventEnd() + this.INTERVAL;
-            this.detecedEvents.put(nxtId, evt);
-        }
-        out.collect(value);
     }
 }
 

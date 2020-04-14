@@ -25,7 +25,7 @@ public class Main {
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         // start the data generator
         DataStream<RawData> input = env
-                .addSource(new DataSource(1000))
+                .addSource(new DataSource())
                 .setParallelism(1);
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
