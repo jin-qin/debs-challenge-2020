@@ -15,6 +15,12 @@
 ### [Rust-based stream processing system](https://github.com/TimelyDataflow/timely-dataflow) (Repository)
 ### [Naiad: A Timely Dataflow System](http://sigops.org/s/conferences/sosp/2013/papers/p439-murray.pdf) (Paper of Rust-based stream processing system)
 
+## Run in docker
+1. Modify `SERVER_IP` inside `docker/Dockerfile`
+2. run `bash build_docker_image.sh`
+3. start grader server
+4. run `docker run image_id`
+
 ## **Team info**
 ### Team members (sorted by first name)
 - Gengtao Xu
