@@ -119,16 +119,19 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         KeyedFeature feature = mapTsFeature.get(timestamp);
         mapTsFeature.remove(timestamp);
 
-        if (windowStartIndex.value() == null) windowStartIndex.update(feature.offset);
-        if (currentWindowStart.value() == null) currentWindowStart.update(feature.offset);
-
+        // if (windowStartIndex.value() == null) windowStartIndex.update(feature.offset);
+        // if (currentWindowStart.value() == null) currentWindowStart.update(feature.offset);
         Window2 w2_v = w2.value();
+        if (w2_v.size() <= 0) {
+            windowStartIndex.update(feature.offset);
+            currentWindowStart.update(feature.offset);
+        }
         w2_v.addElement(feature);
         w2.update(w2_v);
 
         if (Config.debug) {
-            if (feature.idx == 935) {
-                System.out.println(">>>> 935 stage");
+            if (feature.idx == 431) {
+                System.out.println(">>>> 431 stage");
                 System.out.println(w2.value());
             }
         }
@@ -141,8 +144,8 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
                 w2_v.clear();
                 w2.update(w2_v);
 
-                windowStartIndex.update(windowStartIndex.value() + 1);
-                currentWindowStart.update(currentWindowStart.value() + 1);
+//                windowStartIndex.update(windowStartIndex.value() + 1);
+//                currentWindowStart.update(currentWindowStart.value() + 1);
             }
 
             if (feature.key > 0 && feature.offset < Config.w2_size) return;
