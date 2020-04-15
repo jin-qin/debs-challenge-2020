@@ -347,7 +347,7 @@ under the License.
 									<exclude>log4j:log4j</exclude>
 									<exclude>org.apache.commons:commons-math</exclude>
 									<exclude>org.apache.sling:org.apache.sling.commons.json</exclude>
-									<exclude>commons-logging:commons-logging</exclude>
+									<!-- <exclude>commons-logging:commons-logging</exclude> -->
 									<exclude>commons-codec:commons-codec</exclude>
 									<exclude>com.fasterxml.jackson.core:jackson-core</exclude>
 									<exclude>com.fasterxml.jackson.core:jackson-databind</exclude>

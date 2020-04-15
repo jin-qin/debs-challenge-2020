@@ -24,6 +24,7 @@ target
 .settings
 .classpath
 .project
+.vscode
 
 # Package Files #
 *.jar
