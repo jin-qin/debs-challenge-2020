@@ -2,6 +2,7 @@ package request;
 
 import entities.RawData;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import utils.Config;
 import utils.Utils;
 
 import java.util.List;
@@ -9,20 +10,13 @@ import java.util.List;
 public class DataSource implements SourceFunction<RawData> {
     private static final long serialVersionUID = -1418183502579251444L;
 
-    private static long numRequest;
-
     public DataSource(){
-        DataSource.numRequest = -1;
-    }
-
-    public DataSource(long numRequest){
-        DataSource.numRequest = numRequest;
     }
 
     @Override
     public void run(SourceContext<RawData> sourceContext) throws Exception {
         Query1Client query1 = new Query1Client("localhost","/data/1/");
-        if (DataSource.numRequest == -1){
+        if (Config.num_records == -1){
             while (true){
                 String result = query1.getBatch();
                 if (result == null){
@@ -38,7 +32,7 @@ public class DataSource implements SourceFunction<RawData> {
             }
         } else{
             long requestCount = 0;
-            while (requestCount < numRequest){
+            while (requestCount < Config.num_records){
                 String result = query1.getBatch();
                 if (result == null){
                     break;

@@ -10,16 +10,17 @@ import request.DataSource;
 import streaming.Query1Streaming;
 import utils.Utils;
 
+import javax.xml.crypto.Data;
+
 public class Main {
     public static void main(String[] args) throws Exception{
         // set up query connection
-
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         // start the data generator
         DataStream<RawData> input = env
-                .addSource(new DataSource(5000))
+                .addSource(new DataSource())
                 .setParallelism(1);
 
         DataStream<Feature> features = Utils.computeInputSignal(input);

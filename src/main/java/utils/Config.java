@@ -6,4 +6,5 @@ public class Config {
     public static int partion_size = 200;
     public static boolean debug = false;
     public static boolean use_log = true;
+    public static int num_records = -1;
 }
