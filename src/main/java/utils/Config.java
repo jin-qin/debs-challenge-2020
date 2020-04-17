@@ -7,4 +7,5 @@ public class Config {
     public static boolean debug = false;
     public static boolean use_log = true;
     public static int num_records = -1;
+    public static long max_latency = 20;
 }

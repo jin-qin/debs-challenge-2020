@@ -1,16 +1,6 @@
 package debs;
 
-import entities.DetectedEvent;
-import entities.Feature;
-import entities.RawData;
-
-import org.apache.flink.streaming.api.TimeCharacteristic;
-import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.junit.Test;
-import request.DataSource;
-import streaming.Query1Streaming;
-import utils.Utils;
 
 public class StreamTest {
 

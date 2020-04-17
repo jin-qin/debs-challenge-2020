@@ -17,13 +17,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Query1Client {
+public class QueryClient {
     // one instance, reuse
     private final CloseableHttpClient httpClient = HttpClients.createDefault();
     private String host;
     private String endpoint;
 
-    public Query1Client(String host, String endpoint){
+    public QueryClient(String host, String endpoint){
         this.host = host;
         this.endpoint = endpoint;
     }

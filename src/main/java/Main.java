@@ -6,11 +6,10 @@ import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
-import request.DataSource;
+import request.DataSourceForQuery1;
+import request.DataSourceForQuery2;
 import streaming.Query1Streaming;
 import utils.Utils;
-
-import javax.xml.crypto.Data;
 
 public class Main {
     public static void main(String[] args) throws Exception{
@@ -19,8 +18,10 @@ public class Main {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         // start the data generator
+        env.setParallelism(1);
+
         DataStream<RawData> input = env
-                .addSource(new DataSource())
+                .addSource(new DataSourceForQuery2())
                 .setParallelism(1);
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
