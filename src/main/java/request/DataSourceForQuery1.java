@@ -16,8 +16,7 @@ public class DataSourceForQuery1 implements SourceFunction<RawData> {
 
     @Override
     public void run(SourceContext<RawData> sourceContext) throws Exception {
-//        String serverIP = System.getenv("SERVER_IP");
-        String serverIP = "localhost";
+       String serverIP = System.getenv("BENCHMARK_SYSTEM_URL");
         QueryClient query1 = new QueryClient(serverIP,"/data/1/");
         if (Config.num_records == -1){
             long current_time = 0;

@@ -16,13 +16,14 @@ import utils.Utils;
 
 public class Main {
     public static void main(String[] args) throws Exception{
-//        query1();
-        query2();
+       query1();
+       System.out.println("Query 1 finished");
+       query2();
+       System.out.println("Query 2 finished");
     }
 
     public static void query1() throws Exception{
-        String serverIP = System.getenv("SERVER_IP");
-//        String serverIP = "localhost";
+        String serverIP = System.getenv("BENCHMARK_SYSTEM_URL");
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
@@ -46,6 +47,7 @@ public class Main {
                 QueryClient.post(value);
                 if (context.currentWatermark() == Config.endofStream){
                     QueryClient.finalGet();
+                    System.out.println("Query 1 start posting...");
                 }
             }
 
@@ -72,7 +74,6 @@ public class Main {
         QueryClient.setParams(serverIP, "/data/2/");
         result.addSink(new SinkFunction<DetectedEvent>() {
             private static final long serialVersionUID = 192888109083989331L;
-            private long postCounter;
 
             @Override
             public void invoke(DetectedEvent value, Context context) throws Exception {
@@ -80,6 +81,7 @@ public class Main {
                 QueryClient.post(value);
                 if (context.currentWatermark() == Config.endofStream){
                     QueryClient.finalGet();
+                    System.out.println("Query 1 start posting...");
                 }
             }
 

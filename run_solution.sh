@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker run --env SERVER_IP="$1" dsprocks2020/solution
+docker run --env BENCHMARK_SYSTEM_URL="$1" dsprocks2020/solution

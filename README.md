@@ -18,7 +18,7 @@
 ## Run in docker
 1. run `bash build_docker_image.sh`
 2. start grader server
-3. run `bash run_solution <host ip>`
+3. run `bash run_solution <host url>`
 
 Example:
 `bash run_solution 192.168.0.30`
