@@ -20,6 +20,7 @@ public class Main {
     }
 
     public static void query1() throws Exception{
+        String serverIP = System.getenv("SERVER_IP");
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
@@ -33,7 +34,7 @@ public class Main {
         DataStream<Feature> features = Utils.computeInputSignal(input);
         DataStream<DetectedEvent> result = QueryStreaming.start(features);
 //        result.print().setParallelism(1);
-        QueryClient qc = new QueryClient("localhost", "/data/1/");
+        QueryClient qc = new QueryClient(serverIP, "/data/1/");
         result.addSink(new SinkFunction<DetectedEvent>() {
             private static final long serialVersionUID = 192888109083989331L;
             private long postCounter;
@@ -44,7 +45,7 @@ public class Main {
 //                qc.post(value);
                 QueryClient.post(value);
                 postCounter += 1;
-                if (postCounter == 500){
+                if (postCounter == 502){
                     QueryClient.finalGet();
                 }
             }
@@ -57,6 +58,7 @@ public class Main {
     }
 
     public void query2() throws Exception{
+        String serverIP = System.getenv("SERVER_IP");
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
@@ -70,7 +72,7 @@ public class Main {
         DataStream<Feature> features = Utils.computeInputSignal(input);
         DataStream<DetectedEvent> result = QueryStreaming.start(features);
 //        result.print().setParallelism(1);
-        QueryClient qc = new QueryClient("localhost", "/data/2/");
+        QueryClient qc = new QueryClient(serverIP, "/data/2/");
         result.addSink(new SinkFunction<DetectedEvent>() {
             private static final long serialVersionUID = 192888109083989331L;
             private long postCounter;
