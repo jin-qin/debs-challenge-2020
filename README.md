@@ -18,7 +18,7 @@
 ## Run in docker
 1. run `bash build_docker_image.sh`
 2. start grader server
-3. run `bash run_solution 127.0.0.1`
+3. run `bash run_solution <host ip>`
 
 ## **Team info**
 ### Team members (sorted by first name)
