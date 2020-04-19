@@ -18,6 +18,7 @@ import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.FallbackKey;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
@@ -47,12 +48,13 @@ class AddKeyMapper implements FlatMapFunction<Feature, KeyedFeature> {
 
     @Override
     public void flatMap(Feature value, Collector<KeyedFeature> out) throws Exception {
+
         long offset = value.idx % Config.partion_size;
         long partionIdx = value.idx / Config.partion_size; // return the floor long value
-        KeyedFeature keyed = new KeyedFeature(partionIdx, offset, value.idx, value.f1, value.f2);
+        KeyedFeature keyed = new KeyedFeature(partionIdx, offset, value.idx, value.f1, value.f2, value.size);
         out.collect(keyed);
         if (offset < Config.w2_size && partionIdx != 0) {
-            KeyedFeature keyedAdd = new KeyedFeature(partionIdx - 1, Config.partion_size + offset, value.idx, value.f1, value.f2);
+            KeyedFeature keyedAdd = new KeyedFeature(partionIdx - 1, Config.partion_size + offset, value.idx, value.f1, value.f2, value.size);
             out.collect(keyedAdd);
         }
     }
@@ -129,8 +131,8 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         w2.update(w2_v);
 
         if (Config.debug) {
-            if (feature.idx == 431) {
-                System.out.println(">>>> 431 stage");
+            if (feature.idx == 9) {
+                System.out.println(">>>> 9 stage");
                 System.out.println(w2.value());
             }
         }
