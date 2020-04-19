@@ -37,7 +37,6 @@ public class Query1Client {
         HttpGet request = new HttpGet(url);
 
         try (CloseableHttpResponse response = httpClient.execute(request)) {
-
             // Get HttpResponse Status
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode == 404 || statusCode == 500){

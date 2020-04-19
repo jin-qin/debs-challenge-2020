@@ -46,4 +46,9 @@ public class StreamTest {
 //         env.execute("Number of busy machines every 5 minutes over the last 15 minutes");
 //     }
 
+    @Test
+    public void testPostMethod() throws Exception{
+
+    }
+
 }
