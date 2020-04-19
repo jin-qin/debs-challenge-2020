@@ -10,8 +10,6 @@ import request.DataSource;
 import streaming.Query1Streaming;
 import utils.Utils;
 
-import javax.xml.crypto.Data;
-
 public class Main {
     public static void main(String[] args) throws Exception{
         // set up query connection
