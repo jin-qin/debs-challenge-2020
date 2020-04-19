@@ -35,6 +35,22 @@ public class QueryClient implements Serializable {
         httpClient.close();
     }
 
+    public boolean checkConnection() {
+        String url = "http://" + host;
+        HttpGet request = new HttpGet(url);
+        try (CloseableHttpResponse response = httpClient.execute(request)) {
+            // Get HttpResponse Status
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode == 404){
+                return true;
+            }
+        } catch (Exception e){
+            return false;
+        }
+
+        return false;
+    }
+
     public String getBatch() {
         String url = "http://" + host + endpoint;
         HttpGet request = new HttpGet(url);

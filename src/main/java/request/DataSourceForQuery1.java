@@ -24,7 +24,6 @@ public class DataSourceForQuery1 implements SourceFunction<RawData> {
             while (true){
                 String result = query1.getBatch();
                 if (result == null){
-                    System.out.println("Error: ");
                     break;
                 }
                 List<RawData> ls = Utils.parseJson(result, current_time);

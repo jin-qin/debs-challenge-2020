@@ -2,6 +2,10 @@ import entities.DetectedEvent;
 import entities.Feature;
 import entities.RawData;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
+
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -15,11 +19,24 @@ import utils.Config;
 import utils.Utils;
 
 public class Main {
-    public static void main(String[] args) throws Exception{
-       query1();
-       System.out.println("Query 1 finished");
-       query2();
-       System.out.println("Query 2 finished");
+    static {
+        System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
+    }
+
+    public static void main(String[] args) throws Exception {
+        setRedirectOutputToLogFile();
+
+        Utils.waitForBenchmarkSystem(System.getenv("BENCHMARK_SYSTEM_URL"), 80);
+        query1();
+        System.out.println("Query 1 finished");
+        query2();
+        System.out.println("Query 2 finished");
+    }
+
+    public static void setRedirectOutputToLogFile() throws FileNotFoundException {
+        File file = new File(Config.log_file_path);
+        PrintStream stream = new PrintStream(file);
+        System.setOut(stream);
     }
 
     public static void query1() throws Exception{
@@ -43,7 +60,8 @@ public class Main {
 
             @Override
             public void invoke(DetectedEvent value, Context context) throws Exception {
-                System.out.println(value);
+                if (Config.debug)
+                    System.out.println(value);
                 QueryClient.post(value);
                 if (context.currentWatermark() == Config.endofStream){
                     QueryClient.finalGet();
@@ -77,11 +95,12 @@ public class Main {
 
             @Override
             public void invoke(DetectedEvent value, Context context) throws Exception {
-                System.out.println(value);
+                if (Config.debug)
+                    System.out.println(value);
                 QueryClient.post(value);
                 if (context.currentWatermark() == Config.endofStream){
                     QueryClient.finalGet();
-                    System.out.println("Query 1 start posting...");
+                    System.out.println("Query 2 start posting...");
                 }
             }
 

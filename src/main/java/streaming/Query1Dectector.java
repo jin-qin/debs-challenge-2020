@@ -32,18 +32,10 @@ public class Query1Dectector {
             PredictedEvent e = ed.predict(w2);
 
             if (e == null) {
-//                if (w2.size() > Config.w2_size) {
-//                    w2.removeFirst();
-//
-//                    windowStartIndex += 1;
-//                    currentWindowStart += 1;
-//                }
                 continue;
             }
 
             int meanEventIndex = (e.eventStart + e.eventEnd) / 2;
-//            System.out.println(w2.getElements().get(e.eventStart));
-//            System.out.println(w2.getElements().get(e.eventEnd));
             List<KeyedFeature> subWindow = w2.subWindow(e.eventEnd, w2.size());
             w2.setW2(subWindow);
 

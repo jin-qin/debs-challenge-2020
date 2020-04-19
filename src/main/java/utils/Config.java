@@ -9,4 +9,6 @@ public class Config {
     public static int num_records = -1;
     public static long max_latency = 20;
     public static long endofStream = 500000;
+    public static long max_wait_benchmark_seconds = 1800;
+    public static String log_file_path = "/tmp/debs_log.txt";
 }

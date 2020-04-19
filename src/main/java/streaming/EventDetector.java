@@ -44,10 +44,6 @@ public class EventDetector {
 
         this.forwardClusteringStructure = this.clusteringStructure; // save the forward clustering structure
 
-        if (w2.size() >= 10 && w2.getElements().get(0).key == 0){
-            System.out.println("hello");
-        }
-
         if (eventClusterCombination == null) return null; // event not detected, go back to step 1 and add the next sample
 
         // if event detected, start backward pass
@@ -93,15 +89,11 @@ public class EventDetector {
         }
 
         DBSCANClusterer<KeyedFeature> dbscan = new DBSCANClusterer<>(this.dbscanEps, this.dbscanMinPoints);
-        // System.out.println(points);
         List<Cluster<KeyedFeature>> clusters = dbscan.cluster(points);
         Map<Integer, ClusterStructure> clusteringStructure = new HashMap<>();
-        // System.out.println(clusters);
         for(int cluster_i = 0; cluster_i < clusters.size(); cluster_i++){
             // calculate Loc
             List<KeyedFeature> ls = clusters.get(cluster_i).getPoints();
-            // System.out.println(cluster_i);
-            // System.out.println(ls);
             ClusterStructure clusterStructure = extractClusterStructure(ls, indexMap);
             points.removeAll(ls);
             clusteringStructure.put(cluster_i, clusterStructure);
