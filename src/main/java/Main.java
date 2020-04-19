@@ -11,6 +11,7 @@ import request.DataSourceForQuery1;
 import request.DataSourceForQuery2;
 import request.QueryClient;
 import streaming.QueryStreaming;
+import utils.Config;
 import utils.Utils;
 
 public class Main {
@@ -21,6 +22,7 @@ public class Main {
 
     public static void query1() throws Exception{
         String serverIP = System.getenv("SERVER_IP");
+//        String serverIP = "localhost";
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
@@ -37,15 +39,15 @@ public class Main {
         QueryClient qc = new QueryClient(serverIP, "/data/1/");
         result.addSink(new SinkFunction<DetectedEvent>() {
             private static final long serialVersionUID = 192888109083989331L;
-            private long postCounter;
 
             @Override
             public void invoke(DetectedEvent value, Context context) throws Exception {
                 System.out.println(value);
 //                qc.post(value);
                 QueryClient.post(value);
-                postCounter += 1;
-                if (postCounter == 502){
+                System.out.println("currentWatermark");
+                System.out.println(context.currentWatermark());
+                if (context.currentWatermark() == Config.endofStream){
                     QueryClient.finalGet();
                 }
             }
