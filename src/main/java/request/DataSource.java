@@ -21,7 +21,10 @@ public class DataSource implements SourceFunction<RawData> {
 
     @Override
     public void run(SourceContext<RawData> sourceContext) throws Exception {
-        Query1Client query1 = new Query1Client("localhost","/data/1/");
+        String serverIP = System.getenv("SERVER_IP");
+
+        Query1Client query1 = new Query1Client(serverIP,"/data/1/");
+
         if (DataSource.numRequest == -1){
             while (true){
                 String result = query1.getBatch();
