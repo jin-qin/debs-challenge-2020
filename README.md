@@ -16,10 +16,9 @@
 ### [Naiad: A Timely Dataflow System](http://sigops.org/s/conferences/sosp/2013/papers/p439-murray.pdf) (Paper of Rust-based stream processing system)
 
 ## Run in docker
-1. Modify `SERVER_IP` inside `docker/Dockerfile`
-2. run `bash build_docker_image.sh`
-3. start grader server
-4. run `bash run_solution 127.0.0.1`
+1. run `bash build_docker_image.sh`
+2. start grader server
+3. run `bash run_solution 127.0.0.1`
 
 ## **Team info**
 ### Team members (sorted by first name)
