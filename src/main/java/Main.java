@@ -16,8 +16,8 @@ import utils.Utils;
 
 public class Main {
     public static void main(String[] args) throws Exception{
-        query1();
-
+//        query1();
+        query2();
     }
 
     public static void query1() throws Exception{
@@ -43,10 +43,7 @@ public class Main {
             @Override
             public void invoke(DetectedEvent value, Context context) throws Exception {
                 System.out.println(value);
-
                 QueryClient.post(value);
-                System.out.println("currentWatermark");
-                System.out.println(context.currentWatermark());
                 if (context.currentWatermark() == Config.endofStream){
                     QueryClient.finalGet();
                 }
@@ -80,11 +77,8 @@ public class Main {
             @Override
             public void invoke(DetectedEvent value, Context context) throws Exception {
                 System.out.println(value);
-//                qc.post(value);
-                // TODO: bug
                 QueryClient.post(value);
-                postCounter += 1;
-                if (postCounter == 500){
+                if (context.currentWatermark() == Config.endofStream){
                     QueryClient.finalGet();
                 }
             }

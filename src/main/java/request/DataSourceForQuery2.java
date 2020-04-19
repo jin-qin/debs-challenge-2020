@@ -16,10 +16,13 @@ public class DataSourceForQuery2 implements SourceFunction<RawData> {
 
     @Override
     public void run(SourceContext<RawData> sourceContext) throws Exception {
-        String serverIP = System.getenv("SERVER_IP");
+//        String serverIP = System.getenv("SERVER_IP");
+        String serverIP = "localhost";
         QueryClient query1 = new QueryClient(serverIP,"/data/2/");
+
         if (Config.num_records == -1){
             long current_time = 0;
+            long lastWatermark = 0;
             while (true){
                 String result = query1.getBatch();
                 if (result == null){
@@ -27,6 +30,11 @@ public class DataSourceForQuery2 implements SourceFunction<RawData> {
                 }
                 List<RawData> ls = Utils.parseJson(result, current_time);
                 if (ls.size() == 0){
+                    for (;lastWatermark<current_time*Config.w1_size; lastWatermark+=Config.w1_size ){
+                        sourceContext.emitWatermark(new Watermark(lastWatermark));
+                    }
+                    Config.endofStream = lastWatermark - Config.w1_size;
+                    sourceContext.emitWatermark(Watermark.MAX_WATERMARK);
                     break;
                 }
 
