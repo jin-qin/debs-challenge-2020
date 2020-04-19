@@ -41,6 +41,6 @@ public class DetectedEvent {
     }
 
     public String toJson() {
-        return String.format("{'s':%d, 'd':%b, 'event_s':%d}", batchCounter, eventDetected, eventIndMean);
+        return String.format("{\"s\":%d, \"d\":%s, \"event_s\":%d}", batchCounter, eventDetected?"true":"false", eventIndMean);
     }
 }

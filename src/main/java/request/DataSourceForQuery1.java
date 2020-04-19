@@ -21,11 +21,13 @@ public class DataSourceForQuery1 implements SourceFunction<RawData> {
             long current_time = 0;
             while (true){
                 String result = query1.getBatch();
-                if (result == null){
-                    break;
-                }
+//                if (result == null){
+//                    sourceContext.collectWithTimestamp(new RawData(-1,-1,-1.0,-1.0), -1);
+//                    break;
+//                }
                 List<RawData> ls = Utils.parseJson(result, current_time);
                 if (ls.size() == 0){
+//                    sourceContext.collectWithTimestamp(new RawData(-1,-1,-1.0,-1.0), -1);
                     break;
                 }
 
