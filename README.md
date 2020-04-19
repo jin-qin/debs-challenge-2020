@@ -20,6 +20,9 @@
 2. start grader server
 3. run `bash run_solution <host ip>`
 
+Example:
+`bash run_solution 192.168.0.30`
+
 ## **Team info**
 ### Team members (sorted by first name)
 - Gengtao Xu
