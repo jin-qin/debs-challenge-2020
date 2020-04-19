@@ -19,7 +19,7 @@
 1. Modify `SERVER_IP` inside `docker/Dockerfile`
 2. run `bash build_docker_image.sh`
 3. start grader server
-4. run `docker run image_id`
+4. run `bash run_solution 127.0.0.1`
 
 ## **Team info**
 ### Team members (sorted by first name)
