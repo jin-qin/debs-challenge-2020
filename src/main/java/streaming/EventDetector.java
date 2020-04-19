@@ -44,6 +44,10 @@ public class EventDetector {
 
         this.forwardClusteringStructure = this.clusteringStructure; // save the forward clustering structure
 
+        if (w2.size() >= 10 && w2.getElements().get(0).key == 0){
+            System.out.println("hello");
+        }
+
         if (eventClusterCombination == null) return null; // event not detected, go back to step 1 and add the next sample
 
         // if event detected, start backward pass

@@ -13,9 +13,12 @@ import org.apache.flink.util.Collector;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import scala.collection.immutable.Stream;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Utils {
 
@@ -52,11 +55,31 @@ public class Utils {
             super();
         }
 
+        private Map<Long, RawData> prevState = null;
+        private long counter = 0;
+
         @Override
         public void process(Context context, Iterable<RawData> iterable, Collector<Feature> collector) throws Exception {
+
             List<RawData> ls = new ArrayList<>();
             iterable.forEach(ls::add);
-            System.out.println("computeSignal" + (ls.get(0).second) + " " + ls.size());
+//            System.out.println("computeSignal" + (ls.get(0).second) + " " + ls.size());
+
+
+            if (prevState == null){
+                prevState = new HashMap<>();
+                for (RawData each: ls){
+                    prevState.put(each.i%Config.w1_size, each);
+                }
+            }else{
+                for (RawData each: ls){
+                    prevState.put(each.i%Config.w1_size, each);
+                }
+                if (ls.size() < Config.w1_size){
+                    ls.clear();
+                    ls.addAll(prevState.values());
+                }
+            }
 
             double p = Metrics.activePower(ls);
             double s = Metrics.apparentPower(ls);
@@ -66,8 +89,9 @@ public class Utils {
                 p = Math.log(p);
                 q = Math.log(q);
             }
-            Feature point = new Feature(ls.get(0).second, p, q);
+            Feature point = new Feature(counter, p, q, ls.size());
             collector.collect(point);
+            counter++;
         }
     }
 
