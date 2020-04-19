@@ -13,7 +13,6 @@ import org.apache.flink.util.Collector;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import scala.collection.immutable.Stream;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -60,12 +59,9 @@ public class Utils {
 
         @Override
         public void process(Context context, Iterable<RawData> iterable, Collector<Feature> collector) throws Exception {
-
             List<RawData> ls = new ArrayList<>();
             iterable.forEach(ls::add);
 //            System.out.println("computeSignal" + (ls.get(0).second) + " " + ls.size());
-
-
             if (prevState == null){
                 prevState = new HashMap<>();
                 for (RawData each: ls){

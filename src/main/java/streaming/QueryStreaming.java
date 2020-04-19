@@ -18,7 +18,6 @@ import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.FallbackKey;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
@@ -120,8 +119,6 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         KeyedFeature feature = mapTsFeature.get(timestamp);
         mapTsFeature.remove(timestamp);
 
-        // if (windowStartIndex.value() == null) windowStartIndex.update(feature.offset);
-        // if (currentWindowStart.value() == null) currentWindowStart.update(feature.offset);
         Window2 w2_v = w2.value();
         if (w2_v.size() <= 0) {
             windowStartIndex.update(feature.offset);
@@ -141,12 +138,8 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 
         if (e == null) {
             if (w2_v.size() > Config.w2_size) {
-//                w2_v.removeFirst();
                 w2_v.clear();
                 w2.update(w2_v);
-
-//                windowStartIndex.update(windowStartIndex.value() + 1);
-//                currentWindowStart.update(currentWindowStart.value() + 1);
             }
 
             if (feature.key > 0 && feature.offset < Config.w2_size) return;
@@ -156,8 +149,6 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
         }
 
         int meanEventIndex = (e.eventStart + e.eventEnd) / 2;
-//        System.out.println(w2.value().getElements().get(e.eventStart));
-//        System.out.println(w2.value().getElements().get(e.eventEnd));
 
         List<KeyedFeature> subWindow = w2.value().subWindow(e.eventEnd, w2.value().size());
         w2_v.setW2(subWindow);
@@ -180,7 +171,6 @@ class VerifyFunc extends ProcessFunction<DetectedEvent, DetectedEvent> {
     private VerifyQueue buffered = new VerifyQueue();
     private long currentWindowStart = 0;
     private long INTERVAL = Config.w2_size + 1;
-
 
     public void predictEvent(){
 
