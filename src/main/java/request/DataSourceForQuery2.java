@@ -44,6 +44,7 @@ public class DataSourceForQuery2 implements SourceFunction<RawData> {
                 long watermark_time = current_time - Config.max_latency;
                 if (watermark_time >= 0){
                     sourceContext.emitWatermark(new Watermark(watermark_time * Config.w1_size));
+                    lastWatermark = watermark_time * Config.w1_size;
                 }
                 current_time += 1;
             }

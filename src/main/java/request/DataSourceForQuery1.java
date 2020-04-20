@@ -26,7 +26,11 @@ public class DataSourceForQuery1 implements SourceFunction<RawData> {
                 if (result == null){
                     break;
                 }
+//                if (current_time == 800){
+//                    System.out.println("breakpoint");
+//                }
                 List<RawData> ls = Utils.parseJson(result, current_time);
+//                System.out.printf("%d, %s\n", current_time, ls.get(0).toString());
                 if (ls.size() == 0){
                     for (;lastWatermark<current_time*Config.w1_size; lastWatermark+=Config.w1_size ){
                         sourceContext.emitWatermark(new Watermark(lastWatermark));
@@ -40,8 +44,9 @@ public class DataSourceForQuery1 implements SourceFunction<RawData> {
                     sourceContext.collectWithTimestamp(each, each.i);
 
                 }
-                long watermark_time = current_time - Config.max_latency;
+                long watermark_time = current_time;
                 if (watermark_time >= 0){
+//                    System.out.printf("current watermark: %d\n", watermark_time * Config.w1_size);
                     sourceContext.emitWatermark(new Watermark(watermark_time * Config.w1_size));
                     lastWatermark = watermark_time * Config.w1_size;
                 }

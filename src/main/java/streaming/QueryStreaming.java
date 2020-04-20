@@ -4,10 +4,7 @@ import entities.*;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.state.MapState;
@@ -160,7 +157,9 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 class VerifyFunc extends ProcessFunction<DetectedEvent, DetectedEvent> {
     private static final long serialVersionUID = -3260627464897649644L;
 
-    private HashMap<Long, DetectedEventToVerify> detecedEvents = new HashMap<>();
+    private HashMap<Long, DetectedEventToVerify> detectedEvents = new HashMap<>();
+
+//    private Map<Long, DetectedEvent> outputBuffer = new HashMap<>();
     private VerifyQueue buffered = new VerifyQueue();
     private long currentWindowStart = 0;
     private long INTERVAL = Config.w2_size + 1;
@@ -175,20 +174,33 @@ class VerifyFunc extends ProcessFunction<DetectedEvent, DetectedEvent> {
         buffered.addElement(evt.getFeature());
         // like ontimer
         if (evt.isEventDetected()){
-            long nxtId = evt.getEventEnd() + this.INTERVAL;
-            this.detecedEvents.put(nxtId, evt);
+            long nxtId = evt.getEventEnd() + 2*this.INTERVAL;
+            this.detectedEvents.put(nxtId, evt);
         }
+//        outputBuffer.put(value.getBatchCounter(), value);
         out.collect(value);
 
         // ontimer
-        if (detecedEvents.keySet().contains(evt.getFeature().idx)){
-            DetectedEventToVerify detectedEvt = detecedEvents.get(evt.getFeature().idx);
+        if (detectedEvents.keySet().contains(evt.getFeature().idx)){
+            DetectedEventToVerify detectedEvt = detectedEvents.get(evt.getFeature().idx);
+            if (detectedEvt.getBatchCounter() == 6213){
+                System.out.println(">>> 6213");
+            }
+            detectedEvents.remove(evt.getFeature().idx);
             while (!(detectedEvt.getEventStart() >= currentWindowStart && detectedEvt.getEventEnd() < currentWindowStart + this.INTERVAL)){
                 currentWindowStart += this.INTERVAL;
             }
-            List<KeyedFeature> features = buffered.subWindow((int)currentWindowStart, (int)(currentWindowStart + this.INTERVAL));
+            List<KeyedFeature> features = buffered.subWindow((int)currentWindowStart, (int)(currentWindowStart + 2*this.INTERVAL));
             Query1Dectector q1d = new Query1Dectector(features);
             Tuple2<DetectedEvent, Long> result = q1d.dectedEvent();
+
+//            outputBuffer.put(detectedEvt.getBatchCounter(), new DetectedEvent(detectedEvt.getBatchCounter(), false, -1));
+//            if (result != null){
+//                outputBuffer.put(result.f0.getBatchCounter(), result.f0);
+//                currentWindowStart = result.f1;
+//            }
+//            for ()
+
             out.collect(new DetectedEvent(detectedEvt.getBatchCounter(), false, -1));
             if (result != null){
                 out.collect(result.f0);

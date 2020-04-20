@@ -30,8 +30,12 @@ public class Query1Dectector {
             w2.addElement(feature);
 
             PredictedEvent e = ed.predict(w2);
-
             if (e == null) {
+                if (w2.size() > Config.w2_size) {
+                    w2.clear();
+                    currentWindowStart = -1;
+                    windowStartIndex = -1;
+                }
                 continue;
             }
 

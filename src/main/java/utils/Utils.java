@@ -68,6 +68,10 @@ public class Utils {
             List<RawData> ls = new ArrayList<>();
             iterable.forEach(ls::add);
             // System.out.println("computeSignal" + (ls.get(0).second) + " " + ls.size());
+//            if (ls.get(0).second==800){
+//                System.out.println("breakpoint ComputeSignal");
+//            }
+
             if (prevState == null) {
                 prevState = new HashMap<>();
                 for (RawData each : ls) {

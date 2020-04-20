@@ -24,13 +24,13 @@ public class Main {
     }
 
     public static void main(String[] args) throws Exception {
-        setRedirectOutputToLogFile();
+//        setRedirectOutputToLogFile();
 
         Utils.waitForBenchmarkSystem(System.getenv("BENCHMARK_SYSTEM_URL"), 80);
         query1();
         System.out.println("Query 1 finished");
-        query2();
-        System.out.println("Query 2 finished");
+//        query2();
+//        System.out.println("Query 2 finished");
     }
 
     public static void setRedirectOutputToLogFile() throws FileNotFoundException {
