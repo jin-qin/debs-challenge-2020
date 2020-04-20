@@ -5,6 +5,7 @@
 ## **Useful infomation**
 ### [DEBS Challenge 2020 Official Website](https://2020.debs.org/call-for-grand-challenge-solutions/)
 ### [Official solution example](https://github.com/dmpalyvos/debs-2020-challenge-local)
+### [Official grader repo](https://github.com/dmpalyvos/debs-2020-challenge/tree/testing)
 ### [Sequential clustering-based event detection for Non-Intrusive Load Monitoring](./docs/papers/SIPP2016_Final.pdf) `Paper`
 ### [DBSCAN](./docs/papers/DBSCAN.pdf) `Paper`
 
@@ -22,6 +23,8 @@
 
 Example:
 `bash run_solution 192.168.0.30`
+
+> If yout get error while running `mvn clean package`, try commenting this line in `build_docker_image.sh` and run it manually.
 
 ## **Team info**
 ### Team members (sorted by first name)
