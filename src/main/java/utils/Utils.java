@@ -126,4 +126,5 @@ public class Utils {
 
         System.out.println("Failed to establish connection to the benchmark system");
     }
+
 }

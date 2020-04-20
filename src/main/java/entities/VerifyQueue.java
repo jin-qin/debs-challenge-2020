@@ -7,8 +7,8 @@ import java.security.Key;
 import java.util.*;
 
 public class VerifyQueue implements Serializable {
-    private int startIdx;
-    private final int MAX_SIZE = Config.w2_size*6;
+    private long startIdx;
+    private final long MAX_SIZE = Config.w2_size*12;
     private Deque<KeyedFeature> buffered;
 
     public VerifyQueue() {
@@ -42,11 +42,11 @@ public class VerifyQueue implements Serializable {
         }
         return ls;
     }
-    public List<KeyedFeature> subWindow(int start, int end) {
-        return getElements().subList(start-this.startIdx, end-this.startIdx);
+    public List<KeyedFeature> subWindow(long start, long end) {
+        return getElements().subList((int)(start-this.startIdx), (int)(end-this.startIdx));
     }
 
-    public List<KeyedFeature> subWindowToSecondLast(int start) {
-        return getElements().subList(start-this.startIdx, getElements().size()-1);
-    }
+//    public List<KeyedFeature> subWindowToSecondLast(int start) {
+//        return getElements().subList(start-this.startIdx, getElements().size()-1);
+//    }
 }
