@@ -1,5 +1,5 @@
 #!/bin/bash
-# mvn clean package
+mvn clean package
 
 cp ./docker/Dockerfile ./Dockerfile
 
