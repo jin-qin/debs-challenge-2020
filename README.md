@@ -30,7 +30,7 @@ If you make any changes to the source codes, then do the following steps:
 Example:
 `bash run_solution 192.168.0.30`
 
-> **NOTICE:** If yout get error while running `mvn clean package`, try commenting this line in `build_docker_image.sh` and run it manually.
+> **NOTICE:** If yout get error while running `mvn clean package`, try running `sudo rm -rf target`, then commenting `mvn clean package` in `build_docker_image.sh`, run it manually.
 
 ## **Team info**
 ### Team members (sorted by first name)
