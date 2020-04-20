@@ -17,6 +17,12 @@
 ### [Naiad: A Timely Dataflow System](http://sigops.org/s/conferences/sosp/2013/papers/p439-murray.pdf) (Paper of Rust-based stream processing system)
 
 ## Run in docker
+
+### Quick Run
+Run in the top level of this directory: `docker-compose up`
+
+### Rebuild and Run
+If you make any changes to the source codes, then do the following steps:
 1. run `bash build_docker_image.sh`
 2. start grader server
 3. run `bash run_solution <host url>`
@@ -24,7 +30,7 @@
 Example:
 `bash run_solution 192.168.0.30`
 
-> If yout get error while running `mvn clean package`, try commenting this line in `build_docker_image.sh` and run it manually.
+> **NOTICE:** If yout get error while running `mvn clean package`, try commenting this line in `build_docker_image.sh` and run it manually.
 
 ## **Team info**
 ### Team members (sorted by first name)
