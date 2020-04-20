@@ -32,6 +32,17 @@ Example:
 
 > **NOTICE:** If yout get error while running `mvn clean package`, try running `sudo rm -rf target`, then commenting `mvn clean package` in `build_docker_image.sh`, run it manually.
 
+## **TO DO**
+- [x] Query 1
+- [x] Query 2
+- [x] Paralleled Query 1 && Query 2
+- [x] Fixed watermarks
+- [ ] Dynamic watermarks
+- [x] Docker stuff (Dockerfile, docker-compose, test with grader etc.)
+- [x] Test pass on small dataset
+- [x] Test pass on large dataset
+- [ ] Lower down latency in Query 1
+
 ## **Team info**
 ### Team members (sorted by first name)
 - Gengtao Xu
