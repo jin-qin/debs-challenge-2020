@@ -163,7 +163,9 @@ class VerifyFunc extends ProcessFunction<DetectedEvent, DetectedEvent> {
     private HashMap<Long, DetectedEventToVerify> detectedEvents = new HashMap<>();
     private List<Long> partionSchedule = new ArrayList<>();
     private List<DetectedEventToVerify> toVerifyEvents = new ArrayList<>();
+    private OutputQueue outputQueue = new OutputQueue();
     private VerifyQueue buffered = new VerifyQueue();
+    private long currentOutputBound = 0;
     private long currentWindowStart = 0;
     private long INTERVAL = Config.w2_size + 1;
     private long currentKey = 0;
@@ -172,7 +174,8 @@ class VerifyFunc extends ProcessFunction<DetectedEvent, DetectedEvent> {
     public void processElement(DetectedEvent value, Context ctx, Collector<DetectedEvent> out) throws Exception {
         DetectedEventToVerify evt = (DetectedEventToVerify) value;
         buffered.addElement(evt.getFeature());
-        out.collect(value);
+        outputQueue.addElement(evt);
+//        out.collect(value);
 
         if (currentKey == (evt.getFeature().key - 1)){
             currentKey += 1;
@@ -190,7 +193,6 @@ class VerifyFunc extends ProcessFunction<DetectedEvent, DetectedEvent> {
                 currentKey += 1;
                 long nxtId = evt.getEventEnd() + 2*this.INTERVAL;
                 this.detectedEvents.put(nxtId, evt);
-
             }else{
                 long nxtId = evt.getEventEnd() + 2*this.INTERVAL;
                 this.detectedEvents.put(nxtId, evt);
@@ -208,17 +210,19 @@ class VerifyFunc extends ProcessFunction<DetectedEvent, DetectedEvent> {
             while (!(toVerifyEvents.get(0).getFeature().idx >= currentWindowStart && toVerifyEvents.get(0).getFeature().idx < currentWindowStart + this.INTERVAL)){
                 currentWindowStart += this.INTERVAL;
             }
-            if ((int)currentWindowStart > (int)evt.getFeature().idx){
-                System.out.println("verify bound error");
-            }else{
-//                        System.out.printf("%d, %s\n",currentWindowStart,evt.getFeature());
-                List<KeyedFeature> features = buffered.subWindow(currentWindowStart, toVerifyEvents.get(toVerifyEvents.size() -1).getFeature().idx+1);
-                Query1Dectector q1d = new Query1Dectector(features);
-                List<Tuple2<DetectedEvent, Long>> result = q1d.dectedEvent2();
-                for (Tuple2<DetectedEvent, Long> each: result){
-                    out.collect(each.f0);
-                    currentWindowStart = each.f1;
-                }
+            List<KeyedFeature> features = buffered.subWindow(currentWindowStart, toVerifyEvents.get(toVerifyEvents.size() -1).getFeature().idx+1);
+            Query1Dectector q1d = new Query1Dectector(features);
+            List<Tuple2<DetectedEvent, Long>> result = q1d.dectedEvent2();
+            for (Tuple2<DetectedEvent, Long> each: result){
+                outputQueue.update(each.f0.getBatchCounter(), each.f0);
+                currentWindowStart = each.f1;
+            }
+
+            // output buffered events
+            currentOutputBound = toVerifyEvents.get(toVerifyEvents.size() -1).getBatchCounter() + 1;
+            List<DetectedEvent> outputLs = outputQueue.outputToBound(currentOutputBound);
+            for (DetectedEvent outEvt: outputLs) {
+                out.collect(outEvt);
             }
             toVerifyEvents.clear();
         }
@@ -234,11 +238,17 @@ class VerifyFunc extends ProcessFunction<DetectedEvent, DetectedEvent> {
             List<KeyedFeature> features = buffered.subWindow((int)currentWindowStart, (int)(currentWindowStart + 2*this.INTERVAL));
             Query1Dectector q1d = new Query1Dectector(features);
             Tuple2<DetectedEvent, Long> result = q1d.dectedEvent();
-
-            out.collect(new DetectedEvent(detectedEvt.getBatchCounter(), false, -1));
+            outputQueue.update(detectedEvt.getBatchCounter(), new DetectedEvent(detectedEvt.getBatchCounter(), false, -1));
+//            out.collect(new DetectedEvent(detectedEvt.getBatchCounter(), false, -1));
             if (result != null){
-                out.collect(result.f0);
+                outputQueue.update(result.f0.getBatchCounter(), result.f0);
+//                out.collect(result.f0);
                 currentWindowStart = result.f1;
+                currentOutputBound = currentWindowStart;
+            }
+            List<DetectedEvent> outputLs = outputQueue.outputToBound(currentOutputBound);
+            for (DetectedEvent outEvt: outputLs) {
+                out.collect(outEvt);
             }
         }
 
@@ -262,10 +272,83 @@ class VerifyFunc extends ProcessFunction<DetectedEvent, DetectedEvent> {
             Query1Dectector q1d = new Query1Dectector(features);
             List<Tuple2<DetectedEvent, Long>> result = q1d.dectedEvent2();
             for (Tuple2<DetectedEvent, Long> each: result){
-                out.collect(each.f0);
+                outputQueue.update(each.f0.getBatchCounter(), each.f0);
+//                out.collect(each.f0);
                 currentWindowStart = each.f1;
             }
+
+            // output buffered events
+            currentOutputBound = toVerifyEvents.get(toVerifyEvents.size() -1).getBatchCounter() + 1;
+            List<DetectedEvent> outputLs = outputQueue.outputToBound(currentOutputBound);
+            for (DetectedEvent outEvt: outputLs) {
+                out.collect(outEvt);
+            }
             toVerifyEvents.clear();
+        }
+
+        if (Config.endofStream != -1 && evt.getBatchCounter() == Config.endofStream/Config.w1_size){
+            // detectedEvents clear
+            if (detectedEvents.size()>0){
+                DetectedEventToVerify detectedEvt = detectedEvents.values().iterator().next();
+                while (!(detectedEvt.getEventStart() >= currentWindowStart && detectedEvt.getEventEnd() < currentWindowStart + this.INTERVAL)){
+                    currentWindowStart += this.INTERVAL;
+                }
+
+                List<KeyedFeature> features = buffered.subWindow((int)currentWindowStart, (int)(evt.getFeature().idx + 1));
+                Query1Dectector q1d = new Query1Dectector(features);
+                Tuple2<DetectedEvent, Long> result = q1d.dectedEvent();
+                outputQueue.update(detectedEvt.getBatchCounter(), new DetectedEvent(detectedEvt.getBatchCounter(), false, -1));
+//            out.collect(new DetectedEvent(detectedEvt.getBatchCounter(), false, -1));
+                if (result != null){
+                    outputQueue.update(result.f0.getBatchCounter(), result.f0);
+//                out.collect(result.f0);
+                    currentWindowStart = result.f1;
+                    currentOutputBound = currentWindowStart;
+                }
+                List<DetectedEvent> outputLs = outputQueue.outputToBound(currentOutputBound);
+                for (DetectedEvent outEvt: outputLs) {
+                    out.collect(outEvt);
+                }
+            }
+            else if (toVerifyEvents.size() > 0){
+                // clear toVerifyArray
+                // remove all already verified events
+                List<DetectedEventToVerify> temp = new ArrayList<>();
+                for (DetectedEventToVerify each: toVerifyEvents) {
+                    if (each.getFeature().idx < currentKey){
+                        temp.add(each);
+                    }
+                }
+                toVerifyEvents.removeAll(temp);
+
+                // move currentWindowStart to right place
+                while (!(toVerifyEvents.get(0).getFeature().idx >= currentWindowStart && toVerifyEvents.get(0).getFeature().idx < currentWindowStart + this.INTERVAL)){
+                    currentWindowStart += this.INTERVAL;
+                }
+
+                // verify the events
+                List<KeyedFeature> features = buffered.subWindow((int)currentWindowStart, toVerifyEvents.get(toVerifyEvents.size() -1).getFeature().idx+1);
+                Query1Dectector q1d = new Query1Dectector(features);
+                List<Tuple2<DetectedEvent, Long>> result = q1d.dectedEvent2();
+                for (Tuple2<DetectedEvent, Long> each: result){
+                    outputQueue.update(each.f0.getBatchCounter(), each.f0);
+//                out.collect(each.f0);
+                    currentWindowStart = each.f1;
+                }
+
+                // output buffered events
+                currentOutputBound = toVerifyEvents.get(toVerifyEvents.size() -1).getBatchCounter() + 1;
+                List<DetectedEvent> outputLs = outputQueue.outputToBound(currentOutputBound);
+                for (DetectedEvent outEvt: outputLs) {
+                    out.collect(outEvt);
+                }
+                toVerifyEvents.clear();
+            }
+
+            Collection<DetectedEvent> ls = outputQueue.outputAll();
+            for (DetectedEvent each: ls){
+                out.collect(each);
+            }
         }
     }
 }

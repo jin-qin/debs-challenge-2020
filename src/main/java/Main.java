@@ -29,8 +29,8 @@ public class Main {
         Utils.waitForBenchmarkSystem(System.getenv("BENCHMARK_SYSTEM_URL"), 80);
         query1();
         System.out.println("Query 1 finished");
-//        query2();
-//        System.out.println("Query 2 finished");
+        query2();
+        System.out.println("Query 2 finished");
     }
 
     public static void setRedirectOutputToLogFile() throws FileNotFoundException {
@@ -45,7 +45,7 @@ public class Main {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         // start the data generator
-        env.setParallelism(1);
+        env.setParallelism(4);
 
         DataStream<RawData> input = env
                 .addSource(new DataSourceForQuery1())
@@ -63,7 +63,7 @@ public class Main {
                 if (Config.debug)
                     System.out.println(value);
                 QueryClient.post(value);
-                if (context.currentWatermark() == Config.endofStream){
+                if (value.getBatchCounter() * Config.w1_size == Config.endofStream){
                     QueryClient.finalGet();
                     System.out.println("Query 1 start posting...");
                 }
@@ -98,7 +98,7 @@ public class Main {
                 if (Config.debug)
                     System.out.println(value);
                 QueryClient.post(value);
-                if (context.currentWatermark() == Config.endofStream){
+                if (value.getBatchCounter() * Config.w1_size == Config.endofStream){
                     QueryClient.finalGet();
                     System.out.println("Query 2 start posting...");
                 }
