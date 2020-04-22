@@ -65,7 +65,7 @@ public class Main {
                 QueryClient.post(value);
                 if (value.getBatchCounter() * Config.w1_size == Config.endofStream){
                     QueryClient.finalGet();
-                    System.out.println("Query 1 start posting...");
+                    System.out.println("Query 1 start request grading...");
                 }
             }
 
@@ -75,7 +75,7 @@ public class Main {
     }
 
     public static void query2() throws Exception{
-        String serverIP = System.getenv("SERVER_IP");
+        String serverIP = System.getenv("BENCHMARK_SYSTEM_URL");
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
@@ -100,7 +100,7 @@ public class Main {
                 QueryClient.post(value);
                 if (value.getBatchCounter() * Config.w1_size == Config.endofStream){
                     QueryClient.finalGet();
-                    System.out.println("Query 2 start posting...");
+                    System.out.println("Query 2 start request grading...");
                 }
             }
 
