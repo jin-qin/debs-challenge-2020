@@ -45,7 +45,7 @@ public class Main {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         // start the data generator
-        env.setParallelism(4);
+        env.setParallelism(8);
 
         DataStream<RawData> input = env
                 .addSource(new DataSourceForQuery1())
@@ -80,7 +80,7 @@ public class Main {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         // start the data generator
-        env.setParallelism(4);
+        env.setParallelism(8);
 
         DataStream<RawData> input = env
                 .addSource(new DataSourceForQuery2())
@@ -88,7 +88,6 @@ public class Main {
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
         DataStream<DetectedEvent> result = QueryStreaming.start(features);
-//        result.print().setParallelism(1);
         QueryClient.setParams(serverIP, "/data/2/");
         result.addSink(new SinkFunction<DetectedEvent>() {
             private static final long serialVersionUID = 192888109083989331L;

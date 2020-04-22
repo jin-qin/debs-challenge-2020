@@ -2,24 +2,15 @@ package streaming;
 
 import entities.*;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.state.MapState;
-import org.apache.flink.api.common.state.MapStateDescriptor;
-import org.apache.flink.api.common.state.ValueState;
-import org.apache.flink.api.common.state.ValueStateDescriptor;
-import org.apache.flink.api.common.typeinfo.TypeHint;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
-import scala.concurrent.java8.FuturesConvertersImpl;
 import utils.Config;
 
 public class QueryStreaming {
@@ -339,28 +330,28 @@ class VerifyFunc extends ProcessFunction<DetectedEvent, DetectedEvent> {
 class SortFunc extends KeyedProcessFunction<Boolean, DetectedEvent, DetectedEvent> {
     private static final long serialVersionUID = -3260627464897625644L;
 
-    private MapState<Long, DetectedEvent> mapTsEvent;
-
-    @Override
-    public void open(Configuration config) throws IOException {
-        MapStateDescriptor<Long, DetectedEvent> descriptorMapTsEvent = 
-                new MapStateDescriptor<Long, DetectedEvent>(
-                    "MapTsEvent", 
-                    Long.TYPE, 
-                    DetectedEvent.class);
-        mapTsEvent = getRuntimeContext().getMapState(descriptorMapTsEvent);
-    }
+    private HashMap<Boolean, HashMap<Long, DetectedEvent>> mapTsEventMap = new HashMap<>();
 
     @Override
     public void processElement(DetectedEvent value, Context ctx, Collector<DetectedEvent> out) throws Exception {
+        Boolean key = ctx.getCurrentKey();
+        if (mapTsEventMap.get(key) == null) {
+            mapTsEventMap.put(key, new HashMap<>());
+        }
+
+        HashMap<Long, DetectedEvent> mapTsEvent = mapTsEventMap.get(key);
         mapTsEvent.put(ctx.timestamp(), value);
+        mapTsEventMap.put(key, mapTsEvent);
         ctx.timerService().registerEventTimeTimer(ctx.timestamp());
     }
 
     @Override
     public void onTimer(long timestamp, OnTimerContext ctx, Collector<DetectedEvent> out) throws Exception {
+        Boolean key = ctx.getCurrentKey();
+        HashMap<Long, DetectedEvent> mapTsEvent = mapTsEventMap.get(key);
         out.collect(mapTsEvent.get(timestamp));
         mapTsEvent.remove(timestamp);
+        mapTsEventMap.put(key, mapTsEvent);
     }
 }
 
