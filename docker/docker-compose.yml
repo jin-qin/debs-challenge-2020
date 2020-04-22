@@ -8,7 +8,7 @@ services:
       DATASET_PATH: "/dataset"
       GRADER_CACHE_ENABLED: "True"
     volumes:
-      - ~/projects/dataset/small:/dataset # modify to load your dataset path
+      - ~/projects/cs591k1/dataset/small:/dataset # modify to load your dataset path
     networks:
       - bench
 

@@ -71,7 +71,7 @@ public class Main {
 
         }).setParallelism(1);
 
-        env.execute("DEBS Challenge 2020");
+        env.execute("DEBS Challenge 2020 - Query 1");
     }
 
     public static void query2() throws Exception{
@@ -80,7 +80,7 @@ public class Main {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         // start the data generator
-        env.setParallelism(1);
+        env.setParallelism(4);
 
         DataStream<RawData> input = env
                 .addSource(new DataSourceForQuery2())
@@ -106,9 +106,7 @@ public class Main {
 
         }).setParallelism(1);
 
-
-
-        env.execute("DEBS Challenge 2020");
+        env.execute("DEBS Challenge 2020 - Query 2");
     }
 
 }
