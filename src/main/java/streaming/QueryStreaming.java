@@ -60,77 +60,59 @@ class AddKeyMapper implements FlatMapFunction<Feature, KeyedFeature> {
 class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent> {
     private static final long serialVersionUID = -5973216181346355124L;
 
-    private ValueState<Window2> w2;
-    private ValueState<EventDetector> ed;
+    private HashMap<Long, Window2> w2Map = new HashMap<>();
+    private HashMap<Long, EventDetector> edMap = new HashMap<>();
+    private HashMap<Long, Long> windowStartIndexMap = new HashMap<>();
+    private HashMap<Long, Long> currentWindowStartMap = new HashMap<>();
+    private HashMap<Long, HashMap<Long, KeyedFeature>> mapTsFeatureMap = new HashMap<>();
 
-    private ValueState<Long> windowStartIndex;
-    private ValueState<Long> currentWindowStart;
-
-    private MapState<Long, KeyedFeature> mapTsFeature;
-
-    @Override
-    public void open(Configuration config) throws IOException {
-        ValueStateDescriptor<Window2> descriptorW2 =
-                new ValueStateDescriptor<>(
-                        "window2", // the state name
-                        TypeInformation.of(new TypeHint<Window2>() {})); // type information
-        w2 = getRuntimeContext().getState(descriptorW2);
-
-        ValueStateDescriptor<EventDetector> descriptorEventDetector =
-                new ValueStateDescriptor<>(
-                        "EventDetector", // the state name
-                        TypeInformation.of(new TypeHint<EventDetector>() {})); // type information
-        ed = getRuntimeContext().getState(descriptorEventDetector);
-
-        ValueStateDescriptor<Long> descriptorWindowStartIndex =
-                new ValueStateDescriptor<>(
-                        "WindowStartIndex", // the state name
-                        TypeInformation.of(new TypeHint<Long>() {})); // type information
-        windowStartIndex = getRuntimeContext().getState(descriptorWindowStartIndex);
-        
-        ValueStateDescriptor<Long> descriptorCurrentWindowStart =
-                new ValueStateDescriptor<>(
-                        "CurrentWindowStart", // the state name
-                        TypeInformation.of(new TypeHint<Long>() {})); // type information
-        currentWindowStart = getRuntimeContext().getState(descriptorCurrentWindowStart);
-
-        MapStateDescriptor<Long, KeyedFeature> descriptorMapTsEvent = 
-                new MapStateDescriptor<Long, KeyedFeature>(
-                    "MapTsFeature", 
-                    Long.TYPE, 
-                    KeyedFeature.class);
-        mapTsFeature = getRuntimeContext().getMapState(descriptorMapTsEvent);
+    private void initStates(Long key) {
+        if (w2Map.get(key) == null) {
+            w2Map.put(key, new Window2());
+        }
+        if (edMap.get(key) == null) {
+            edMap.put(key, new EventDetector());
+        }
+        if (mapTsFeatureMap.get(key) == null) {
+            mapTsFeatureMap.put(key, new HashMap<>());
+        }
     }
 
     @Override
     public void processElement(KeyedFeature feature, Context context, Collector<DetectedEvent> collector) throws Exception {
-        if (w2.value() == null) w2.update(new Window2());
-        if (ed.value() == null) ed.update(new EventDetector());
+        Long key = context.getCurrentKey();
+        initStates(key);
 
         long ts = context.timestamp();
+        HashMap<Long, KeyedFeature> mapTsFeature = mapTsFeatureMap.get(key);
         mapTsFeature.put(ts, feature);
+        mapTsFeatureMap.put(key, mapTsFeature);
         context.timerService().registerEventTimeTimer(ts);
     }
 
     @Override
     public void onTimer(long timestamp, OnTimerContext ctx, Collector<DetectedEvent> out) throws Exception {
+        Long key = ctx.getCurrentKey();
+
+        HashMap<Long, KeyedFeature> mapTsFeature = mapTsFeatureMap.get(key);
         KeyedFeature feature = mapTsFeature.get(timestamp);
         mapTsFeature.remove(timestamp);
+        mapTsFeatureMap.put(key, mapTsFeature);
 
-        Window2 w2_v = w2.value();
+        Window2 w2_v = w2Map.get(key);
         if (w2_v.size() <= 0) {
-            windowStartIndex.update(feature.offset);
-            currentWindowStart.update(feature.offset);
+            windowStartIndexMap.put(key, feature.offset);
+            currentWindowStartMap.put(key, feature.offset);
         }
         w2_v.addElement(feature);
-        w2.update(w2_v);
+        w2Map.put(key, w2_v);
         
-        PredictedEvent e = ed.value().predict(w2.value());
+        PredictedEvent e = edMap.get(key).predict(w2_v);
 
         if (e == null) {
             if (w2_v.size() > Config.w2_size) {
                 w2_v.clear();
-                w2.update(w2_v);
+                w2Map.put(key, w2_v);
             }
 
             if (feature.key > 0 && feature.offset < Config.w2_size) return;
@@ -141,13 +123,14 @@ class PredictFunc extends KeyedProcessFunction<Long, KeyedFeature, DetectedEvent
 
         int meanEventIndex = (e.eventStart + e.eventEnd) / 2;
 
-        List<KeyedFeature> subWindow = w2.value().subWindow(e.eventEnd, w2.value().size());
+        List<KeyedFeature> subWindow = w2_v.subWindow(e.eventEnd, w2_v.size());
         w2_v.setW2(subWindow);
-        w2.update(w2_v);
+        w2Map.put(key, w2_v);
 
-        windowStartIndex.update(windowStartIndex.value() + e.eventEnd);
-        Long globalCurrentWindowStart = feature.key * Config.partion_size + currentWindowStart.value();
-        currentWindowStart.update(windowStartIndex.value());
+        Long windowStartIndex = windowStartIndexMap.get(key);
+        windowStartIndexMap.put(key, windowStartIndex + e.eventEnd);
+        Long globalCurrentWindowStart = feature.key * Config.partion_size + currentWindowStartMap.get(key);
+        currentWindowStartMap.put(key, windowStartIndexMap.get(key));
 
         if (feature.key > 0 && feature.offset < Config.w2_size) return;
 

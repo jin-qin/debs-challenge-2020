@@ -20,24 +20,24 @@ import java.util.List;
 
 public class EventDetectorTest {
 
-    @Test
-    public void test(){
-        String serverIP = System.getenv("BENCHMARK_SYSTEM_URL");
-        QueryClient query1 = new QueryClient(serverIP,"/data/1/");
-        String result = query1.getBatch();
-        for (Object obj:((JSONArray)JSON.parseObject(result).get("records"))){
-            Long i = (Long)((JSONObject)obj).get("i");
-            Double voltage = (Double)((JSONObject)obj).get("voltage");
-            Double current = (Double)((JSONObject)obj).get("current");
+//     @Test
+//     public void test(){
+//         String serverIP = System.getenv("BENCHMARK_SYSTEM_URL");
+//         QueryClient query1 = new QueryClient(serverIP,"/data/1/");
+//         String result = query1.getBatch();
+//         for (Object obj:((JSONArray)JSON.parseObject(result).get("records"))){
+//             Long i = (Long)((JSONObject)obj).get("i");
+//             Double voltage = (Double)((JSONObject)obj).get("voltage");
+//             Double current = (Double)((JSONObject)obj).get("current");
             
-        }
-//        List<RawData> results = JSON.parseArray(JSON.parseObject(result).get("records").toString(), RawData.class);
-//        for (Object each: results){
-//            System.out.println(each);
-//        }
-//        System.out.println();
+//         }
+// //        List<RawData> results = JSON.parseArray(JSON.parseObject(result).get("records").toString(), RawData.class);
+// //        for (Object each: results){
+// //            System.out.println(each);
+// //        }
+// //        System.out.println();
 
-    }
+//     }
 
 
     // @Test
