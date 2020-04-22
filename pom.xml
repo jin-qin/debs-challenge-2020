@@ -49,6 +49,12 @@ under the License.
 	<dependencies>
 
 		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>1.2.61</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.apache.flink</groupId>
 			<artifactId>flink-java</artifactId>
 			<version>${flink.version}</version>
@@ -136,11 +142,11 @@ under the License.
 			<artifactId>httpclient</artifactId>
 			<version>4.5.10</version>
 		</dependency>
-		<dependency>
-			<groupId>com.googlecode.json-simple</groupId>
-			<artifactId>json-simple</artifactId>
-			<version>1.1</version>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>com.googlecode.json-simple</groupId>-->
+<!--			<artifactId>json-simple</artifactId>-->
+<!--			<version>1.1</version>-->
+<!--		</dependency>-->
 	</dependencies>
 
 	<build>

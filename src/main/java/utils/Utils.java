@@ -1,5 +1,8 @@
 package utils;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import entities.Feature;
 import entities.RawData;
 import request.QueryClient;
@@ -11,9 +14,6 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindo
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -27,21 +27,15 @@ public class Utils {
 
     public static List<RawData> parseJson(String str, long currentTime) {
         List<RawData> ls = new ArrayList<>();
-        try {
-            JSONObject obj = (JSONObject) new JSONParser().parse(str);
-            if (obj.get("records").toString().equals("")) {
-                return ls;
-            }
-            JSONArray records = (JSONArray) obj.get("records");
-            for (Object each : records) {
-                JSONObject jobj = (JSONObject) each;
-                ls.add(new RawData(currentTime, Long.parseLong(jobj.get("i").toString()),
-                        Double.parseDouble(jobj.get("voltage").toString()),
-                        Double.parseDouble(jobj.get("current").toString())));
-            }
+        Object records = JSON.parseObject(str).get("records");
+        if (records.toString().equals("")){
             return ls;
-        } catch (Exception e) {
-            e.printStackTrace();
+        }
+        for (Object obj:((JSONArray)records)){
+            Long i = Long.parseLong(((JSONObject)obj).get("i").toString());
+            Double voltage = Double.parseDouble(((JSONObject)obj).get("voltage").toString());
+            Double current = Double.parseDouble(((JSONObject)obj).get("current").toString());
+            ls.add(new RawData(currentTime, i, voltage, current));
         }
         return ls;
     }

@@ -1,17 +1,44 @@
 package debs;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import entities.KeyedFeature;
 
-import org.json.simple.JSONArray;
-import org.json.simple.parser.JSONParser;
+import entities.RawData;
+import org.apache.flink.streaming.api.watermark.Watermark;
+
 import org.junit.Test;
+import request.QueryClient;
 import streaming.EventDetector;
+import utils.Config;
+import utils.Utils;
 
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
 public class EventDetectorTest {
+
+    @Test
+    public void test(){
+        String serverIP = System.getenv("BENCHMARK_SYSTEM_URL");
+        QueryClient query1 = new QueryClient(serverIP,"/data/1/");
+        String result = query1.getBatch();
+        for (Object obj:((JSONArray)JSON.parseObject(result).get("records"))){
+            Long i = (Long)((JSONObject)obj).get("i");
+            Double voltage = (Double)((JSONObject)obj).get("voltage");
+            Double current = (Double)((JSONObject)obj).get("current");
+            
+        }
+//        List<RawData> results = JSON.parseArray(JSON.parseObject(result).get("records").toString(), RawData.class);
+//        for (Object each: results){
+//            System.out.println(each);
+//        }
+//        System.out.println();
+
+    }
+
 
     // @Test
     // public void updateClusteringTest(){
