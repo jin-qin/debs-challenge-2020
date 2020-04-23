@@ -30,7 +30,7 @@ public class Main {
     private static Queue<DetectedEvent> query2PostQueue = new LinkedList<>();
 
     public static void main(String[] args) throws Exception {
-//        setRedirectOutputToLogFile();
+        // setRedirectOutputToLogFile();
 
         Utils.waitForBenchmarkSystem(System.getenv("BENCHMARK_SYSTEM_URL"), 80);
         query1();
@@ -45,9 +45,8 @@ public class Main {
         System.setOut(stream);
     }
 
-    public static void query1() throws Exception{
+    public static void query1() throws Exception {
         String serverIP = System.getenv("BENCHMARK_SYSTEM_URL");
-
 
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -55,9 +54,7 @@ public class Main {
         // start the data generator
         env.setParallelism(1);
 
-        DataStream<RawData> input = env
-                .addSource(new DataSourceForQuery1())
-                .setParallelism(1);
+        DataStream<RawData> input = env.addSource(new DataSourceForQuery1()).setParallelism(1);
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
         DataStream<DetectedEvent> result = QueryStreaming1.start(features);
@@ -68,53 +65,39 @@ public class Main {
 
             @Override
             public void invoke(DetectedEvent value, Context context) throws Exception {
-//                if (Config.debug)
-//                    System.out.println(value);
-                synchronized (query1PostQueue){
+                synchronized (query1PostQueue) {
                     query1PostQueue.add(value);
                 }
-//                if (Config.debug)
-//                    System.out.println(query1PostQueue.size());
             }
 
         }).setParallelism(1);
 
-        Thread postThread = new Thread(){
+        Thread postThread = new Thread(new Runnable() {
             @Override
             public void run() {
-//                super.run();
-                System.out.println("enter thread");
-                while(true){
-//                    System.out.println(query1PostQueue.size());
-//                    try {
-//                        Thread.sleep(1);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-                    if (query1PostQueue.size() > 0){
-                        DetectedEvent item;
-                        synchronized (query1PostQueue){
-                            item =query1PostQueue.poll();
-                        }
+                while (true) {
+                    DetectedEvent item = null;
+                    synchronized (query1PostQueue) {
+                        item = query1PostQueue.poll();
+                    }
+
+                    if (item != null) {
                         if (Config.debug)
-                            System.out.println(item);
+                            System.out.println("posting: " + item);
                         try {
-//                            QueryClient.post(item);
-                            if (item.getBatchCounter() * Config.w1_size == Config.endofStream){
+                            QueryClient.post(item);
+                            if (item.getBatchCounter() * Config.w1_size == Config.endofStream) {
                                 QueryClient.finalGet();
                                 break;
                             }
-                        }catch(Exception e){
-                            e.printStackTrace();
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
                         }
                     }
                 }
             }
-        };
+        });
         postThread.start();
-        postThread.join();
-        System.out.println(postThread);
-
 
         env.execute("DEBS Challenge 2020 - Query 1");
     }
@@ -139,33 +122,38 @@ public class Main {
 
             @Override
             public void invoke(DetectedEvent value, Context context) throws Exception {
-                query2PostQueue.add(value);
+                synchronized (query2PostQueue) {
+                    query2PostQueue.add(value);
+                }
             }
 
         }).setParallelism(1);
 
-        Thread postThread = new Thread(){
+        Thread postThread = new Thread(new Runnable() {
             @Override
             public void run() {
-//                super.run();
-                while(true){
-                    if (query2PostQueue.size() > 0){
-                        DetectedEvent item =query2PostQueue.poll();
+                while (true) {
+                    DetectedEvent item = null;
+                    synchronized (query2PostQueue) {
+                        item = query2PostQueue.poll();
+                    }
+
+                    if (item != null) {
                         if (Config.debug)
-                            System.out.println(item);
+                            System.out.println("posting: " + item);
                         try {
                             QueryClient.post(item);
-                            if (item.getBatchCounter() * Config.w1_size == Config.endofStream){
+                            if (item.getBatchCounter() * Config.w1_size == Config.endofStream) {
                                 QueryClient.finalGet();
                                 break;
                             }
-                        }catch(Exception e){
-                            e.printStackTrace();
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
                         }
                     }
                 }
             }
-        };
+        });
         postThread.start();
 
         env.execute("DEBS Challenge 2020 - Query 2");
