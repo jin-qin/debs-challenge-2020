@@ -5,7 +5,9 @@ import entities.RawData;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.util.*;
 
+import org.apache.commons.math3.analysis.function.Exp;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -23,6 +25,9 @@ public class Main {
     static {
         System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
     }
+
+    private static Queue<DetectedEvent> query1PostQueue = new LinkedList<>();
+    private static Queue<DetectedEvent> query2PostQueue = new LinkedList<>();
 
     public static void main(String[] args) throws Exception {
 //        setRedirectOutputToLogFile();
@@ -42,6 +47,8 @@ public class Main {
 
     public static void query1() throws Exception{
         String serverIP = System.getenv("BENCHMARK_SYSTEM_URL");
+
+
         // set up streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
@@ -61,16 +68,53 @@ public class Main {
 
             @Override
             public void invoke(DetectedEvent value, Context context) throws Exception {
-                if (Config.debug)
-                    System.out.println(value);
-                QueryClient.post(value);
-                if (value.getBatchCounter() * Config.w1_size == Config.endofStream){
-                    QueryClient.finalGet();
-                    System.out.println("Query 1 start request grading...");
+//                if (Config.debug)
+//                    System.out.println(value);
+                synchronized (query1PostQueue){
+                    query1PostQueue.add(value);
                 }
+//                if (Config.debug)
+//                    System.out.println(query1PostQueue.size());
             }
 
         }).setParallelism(1);
+
+        Thread postThread = new Thread(){
+            @Override
+            public void run() {
+//                super.run();
+                System.out.println("enter thread");
+                while(true){
+//                    System.out.println(query1PostQueue.size());
+//                    try {
+//                        Thread.sleep(1);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+                    if (query1PostQueue.size() > 0){
+                        DetectedEvent item;
+                        synchronized (query1PostQueue){
+                            item =query1PostQueue.poll();
+                        }
+                        if (Config.debug)
+                            System.out.println(item);
+                        try {
+//                            QueryClient.post(item);
+                            if (item.getBatchCounter() * Config.w1_size == Config.endofStream){
+                                QueryClient.finalGet();
+                                break;
+                            }
+                        }catch(Exception e){
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        };
+        postThread.start();
+        postThread.join();
+        System.out.println(postThread);
+
 
         env.execute("DEBS Challenge 2020 - Query 1");
     }
@@ -95,16 +139,34 @@ public class Main {
 
             @Override
             public void invoke(DetectedEvent value, Context context) throws Exception {
-                if (Config.debug)
-                    System.out.println(value);
-                QueryClient.post(value);
-                if (value.getBatchCounter() * Config.w1_size == Config.endofStream){
-                    QueryClient.finalGet();
-                    System.out.println("Query 2 start request grading...");
-                }
+                query2PostQueue.add(value);
             }
 
         }).setParallelism(1);
+
+        Thread postThread = new Thread(){
+            @Override
+            public void run() {
+//                super.run();
+                while(true){
+                    if (query2PostQueue.size() > 0){
+                        DetectedEvent item =query2PostQueue.poll();
+                        if (Config.debug)
+                            System.out.println(item);
+                        try {
+                            QueryClient.post(item);
+                            if (item.getBatchCounter() * Config.w1_size == Config.endofStream){
+                                QueryClient.finalGet();
+                                break;
+                            }
+                        }catch(Exception e){
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        };
+        postThread.start();
 
         env.execute("DEBS Challenge 2020 - Query 2");
     }

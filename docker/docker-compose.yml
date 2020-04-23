@@ -8,7 +8,7 @@ services:
       DATASET_PATH: "/dataset"
       GRADER_CACHE_ENABLED: "True"
     volumes:
-      - ~/projects/cs591k1/dataset/small:/dataset # modify to load your dataset path
+      - /home/runqi/Workspace/Spring2020/CS591K1/challenge/dataset2:/dataset # modify to load your dataset path
     networks:
       - bench
 
