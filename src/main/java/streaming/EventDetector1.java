@@ -1,7 +1,7 @@
 package streaming;
 
 import entities.ClusterStructure;
-import entities.KeyedFeature;
+import entities.Feature;
 import entities.PredictedEvent;
 import entities.Window2;
 
@@ -15,7 +15,7 @@ import utils.*;
 import java.io.Serializable;
 import java.util.*;
 
-public class EventDetector implements Serializable {
+public class EventDetector1 implements Serializable {
 
     private double dbscanEps = 0.03;
     private int dbscanMinPoints = 1;
@@ -27,13 +27,13 @@ public class EventDetector implements Serializable {
     private Map<Integer, ClusterStructure> forwardClusteringStructure;
     private Map<Integer, ClusterStructure> backwardClusteringStructure;
 
-    public EventDetector() {
+    public EventDetector1() {
     }
 
     public PredictedEvent
     predict(Window2 w2) {
 
-        List<KeyedFeature> input = w2.getElements();
+        List<Feature> input = w2.getElements();
 
         // forward pass
         this.updateClustering(input);
@@ -53,7 +53,7 @@ public class EventDetector implements Serializable {
         Tuple3<Integer, Integer, List<Integer>> eventClusterCombinationBalanced = eventClusterCombination;
 
         for (int i = 1; i < input.size() - 1; i++) {
-            List<KeyedFeature> inputCut = input.subList(i, input.size());
+            List<Feature> inputCut = input.subList(i, input.size());
 
             this.updateClustering(inputCut);
             checkedClusters = this.checkEventModelConstraints();
@@ -80,22 +80,22 @@ public class EventDetector implements Serializable {
         return clusteringStructure;
     }
 
-    public void updateClustering(List<KeyedFeature> input) {
+    public void updateClustering(List<Feature> input) {
         // save point index in a map
-        List<KeyedFeature> points = new ArrayList<>();
+        List<Feature> points = new ArrayList<>();
         points.addAll(input);
 
-        Map<KeyedFeature, Integer> indexMap = new HashMap<KeyedFeature, Integer>();
+        Map<Feature, Integer> indexMap = new HashMap<Feature, Integer>();
         for (int i=0; i < points.size(); i++){
             indexMap.put(points.get(i), i);
         }
 
-        DBSCANClusterer<KeyedFeature> dbscan = new DBSCANClusterer<>(this.dbscanEps, this.dbscanMinPoints);
-        List<Cluster<KeyedFeature>> clusters = dbscan.cluster(points);
+        DBSCANClusterer<Feature> dbscan = new DBSCANClusterer<>(this.dbscanEps, this.dbscanMinPoints);
+        List<Cluster<Feature>> clusters = dbscan.cluster(points);
         Map<Integer, ClusterStructure> clusteringStructure = new HashMap<>();
         for(int cluster_i = 0; cluster_i < clusters.size(); cluster_i++){
             // calculate Loc
-            List<KeyedFeature> ls = clusters.get(cluster_i).getPoints();
+            List<Feature> ls = clusters.get(cluster_i).getPoints();
             ClusterStructure clusterStructure = extractClusterStructure(ls, indexMap);
             points.removeAll(ls);
             clusteringStructure.put(cluster_i, clusterStructure);
@@ -106,11 +106,11 @@ public class EventDetector implements Serializable {
         this.clusteringStructure = clusteringStructure;
     }
 
-    private ClusterStructure extractClusterStructure(List<KeyedFeature> ls, Map<KeyedFeature, Integer> indexMap){
+    private ClusterStructure extractClusterStructure(List<Feature> ls, Map<Feature, Integer> indexMap){
         int u = indexMap.keySet().size()+1;
         int v = -1;
         List<Integer> idxLs = new ArrayList<>();
-        for (KeyedFeature each : ls){
+        for (Feature each : ls){
             int idx = indexMap.get(each);
             idxLs.add(idx);
             v = idx>v?idx:v;

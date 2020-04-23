@@ -14,7 +14,8 @@ import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import request.DataSourceForQuery1;
 import request.DataSourceForQuery2;
 import request.QueryClient;
-import streaming.QueryStreaming;
+import streaming.QueryStreaming1;
+import streaming.QueryStreaming2;
 import utils.Config;
 import utils.Utils;
 
@@ -45,14 +46,14 @@ public class Main {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         // start the data generator
-        env.setParallelism(8);
+        env.setParallelism(1);
 
         DataStream<RawData> input = env
                 .addSource(new DataSourceForQuery1())
                 .setParallelism(1);
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
-        DataStream<DetectedEvent> result = QueryStreaming.start(features);
+        DataStream<DetectedEvent> result = QueryStreaming1.start(features);
 
         QueryClient.setParams(serverIP, "/data/1/");
         result.addSink(new SinkFunction<DetectedEvent>() {
@@ -80,14 +81,14 @@ public class Main {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         // start the data generator
-        env.setParallelism(8);
+        env.setParallelism(1);
 
         DataStream<RawData> input = env
                 .addSource(new DataSourceForQuery2())
                 .setParallelism(1);
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
-        DataStream<DetectedEvent> result = QueryStreaming.start(features);
+        DataStream<DetectedEvent> result = QueryStreaming2.start(features);
         QueryClient.setParams(serverIP, "/data/2/");
         result.addSink(new SinkFunction<DetectedEvent>() {
             private static final long serialVersionUID = 192888109083989331L;
@@ -107,5 +108,4 @@ public class Main {
 
         env.execute("DEBS Challenge 2020 - Query 2");
     }
-
 }

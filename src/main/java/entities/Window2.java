@@ -1,16 +1,24 @@
 package entities;
 
+import java.io.Serializable;
 import java.util.*;
 
 import utils.Config;
 
-public class Window2 {
+public class Window2 implements Serializable{
     private final int MAX_SIZE = Config.w2_size;
     private Deque<KeyedFeature> w2 = new ArrayDeque<KeyedFeature>();
+    private Deque<Feature> w2nokey = new ArrayDeque<Feature>();
+    private Boolean isNoKey = false;
 
     public Window2() {}
+    public Window2(Boolean nokey) { isNoKey = nokey; }
+
+    public void setIsNoKey(Boolean nokey) {
+        isNoKey = nokey;
+    }
     
-    public void addElement(KeyedFeature point) {
+    public <T> void addElement(T point) {
         // if (w2.size() > MAX_SIZE + 1) {
         //     w2.clear();
         //     w2.removeFirst();
@@ -18,38 +26,71 @@ public class Window2 {
         // } else {
         //     w2.addLast(point);
         // }
-
-        w2.addLast(point);
+        
+        if (isNoKey) {
+            w2nokey.addLast((Feature)point);
+        } else {
+            w2.addLast((KeyedFeature)point);
+        }
     }
 
     public void removeFirst() {
-        w2.removeFirst();
+        if (isNoKey) {
+            w2nokey.removeFirst();
+        } else {
+            w2.removeFirst();
+        }
+        
     }
 
     public void clear() {
-        w2.clear();
+        if (isNoKey) {
+            w2nokey.clear();
+        } else {
+            w2.clear();
+        }
     }
 
     public int size() {
-        return w2.size();
-    }
-
-    public void setW2(List<KeyedFeature> features) {
-        w2.clear();
-        w2.addAll(features);
-    } 
-
-    public List<KeyedFeature> subWindow(int start, int end) {
-        return getElements().subList(start, end);
-    }
-
-    public List<KeyedFeature> getElements() {
-        List<KeyedFeature> ls = new ArrayList<>();
-        Iterator<KeyedFeature> it = w2.iterator();
-        while(it.hasNext()) {
-            ls.add(it.next());
+        if (isNoKey) {
+            return w2nokey.size();
+        } else {
+            return w2.size();
         }
-        return ls;
+        
+    }
+
+    public <T> void setW2(List<T> features) {
+        if (isNoKey) {
+            w2nokey.clear();
+            w2nokey.addAll((List<Feature>)features);
+        } else {
+            w2.clear();
+            w2.addAll((List<KeyedFeature>) features);
+        }
+        
+    }
+
+    public <T> List<T> subWindow(int start, int end) {
+        return (List<T>) getElements().subList(start, end);
+    }
+
+    public <T> List<T> getElements() {
+        if (isNoKey) {
+            List<Feature> ls = new ArrayList<>();
+            Iterator<Feature> it = w2nokey.iterator();
+            while(it.hasNext()) {
+                ls.add(it.next());
+            }
+            return (List<T>) ls;
+        } else {
+            List<KeyedFeature> ls = new ArrayList<>();
+            Iterator<KeyedFeature> it = w2.iterator();
+            while(it.hasNext()) {
+                ls.add(it.next());
+            }
+            return (List<T>) ls;
+        }
     }
 
     @Override

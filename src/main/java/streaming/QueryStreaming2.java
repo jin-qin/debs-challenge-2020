@@ -13,7 +13,7 @@ import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 import utils.Config;
 
-public class QueryStreaming {
+public class QueryStreaming2 {
     public static DataStream<DetectedEvent> start(DataStream<Feature> features) {
         DataStream<DetectedEvent> result = features.flatMap(new AddKeyMapper())
                 .keyBy(e -> e.key)
