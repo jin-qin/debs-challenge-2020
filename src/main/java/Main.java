@@ -46,14 +46,14 @@ public class Main {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         // start the data generator
-        env.setParallelism(1);
+        env.setParallelism(8);
 
         DataStream<RawData> input = env
                 .addSource(new DataSourceForQuery1())
                 .setParallelism(1);
 
         DataStream<Feature> features = Utils.computeInputSignal(input);
-        DataStream<DetectedEvent> result = QueryStreaming1.start(features);
+        DataStream<DetectedEvent> result = QueryStreaming2.start(features);
 
         QueryClient.setParams(serverIP, "/data/1/");
         result.addSink(new SinkFunction<DetectedEvent>() {
@@ -81,7 +81,7 @@ public class Main {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         // start the data generator
-        env.setParallelism(1);
+        env.setParallelism(8);
 
         DataStream<RawData> input = env
                 .addSource(new DataSourceForQuery2())
